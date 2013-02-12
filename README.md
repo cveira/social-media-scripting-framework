@@ -1,4 +1,4 @@
-In a few words: "The SQL of Social Media Channels"
+In a few words, this project tries to become "The SQL of Social Media Channels".
 
 The Social Media Scripting Framework is a PowerShell-based environment that abstracts the complexities of modern Social Media Channels from the PowerShell command-line. This enables any regular user (arguably, a 'power user') to leverage the content, connections and relationships of those channels in a completely new way.
 
