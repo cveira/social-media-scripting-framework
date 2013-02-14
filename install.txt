@@ -1,0 +1,102 @@
+A. SYSTEM REQUIREMENTS:
+   =============================================================================
+
+1. A working PowerShell v3 installation configured to run scripts. The full
+   Windows Management Framework is recommended.
+
+   https://www.microsoft.com/en-us/download/details.aspx?id=34595
+
+   From a PowerShell console lauched with administrative privileges, run:
+
+     PS C:\> Set-ExecutionPolicy RemoteSigned
+
+2. Facebook PowerShell Module:
+
+   http://facebookpsmodule.codeplex.com/
+
+3. System Locale configured to: 'en-US'
+
+   'Control Panel' > 'Region & Language' > 'Administrative Tab':
+     'Language for non-Unicode Programs' = 'English (United States)'
+
+4. To take advantaje of the Microsoft Excel features, you should have a working
+   copy of it installed too.
+
+   NOTE: I couldn't test this sofware release against Excel 2010. Other
+   versions should work too, but I actually didn't test it. If you do, just let
+   me know under which ones work and which raise problems.
+
+
+B. INITIAL CONFIGURATION STEPS:
+   =============================================================================
+
+1. Decompress SMSF package (C:\SMSF, for example).
+
+2. Setup up your Twitter Credentials:
+
+   Step 1: Register SMSF as one of your Twitter applications in https://dev.twitter.com/apps
+
+   Step 2: Update your Access Token if necessary.
+
+   Step 3: Edit the file 'SMSF-security.ps1' and update each setting with the correct values.
+
+3. Set up your Facebook Credentials
+
+   Step 1: Open a PowerShell console in STA mode:
+     C:\> powershell.exe -STA
+
+   Step 2: Run the following command:
+     PS C:\> New-FBConnection
+
+   Step 3: Introduce your Facebook credentials on the pop-up window.
+     NOTE: Select the 'Keep me logged in' option!
+
+   Step 4: Run the following commands:
+     PS C:\> Get-FBPage | Select name, PageId, category | Format-Table -AutoSize
+
+   Step 5: Select/Copy the PageId of the Page you want to operate in.
+
+   Step 6: Edit the file 'SMSF-security.ps1' and update the 'FBDefaultPageId' value accordingly.
+
+   Step 7: Run the following command:
+     PS C:\> ( New-FBConnection -PageId <YourPageId> -ExtendToken ).AccessToken
+
+   Step 8: Edit the file 'SMSF-security.ps1' and update the 'FBAccessToken' value accordingly.
+
+4. Review & Edit Data Set mapping rules contained in 'SMSF-settings.ps1' according to your
+   particular needs.
+
+
+C. OPENING THE SOCIAL MEDIA SCRIPTING CONSOLE:
+   =============================================================================
+
+   If you have installed the framework in 'C:\SMSF', run the following commands from a PowerShell
+   console:
+
+     PS C:\> cd SMSF
+     PS C:\SMSF> .\SMSC.ps1
+
+
+D. SECURITY CONSIDERATIONS:
+   =============================================================================
+
+There are certain files and folders that should be protected from unauthorized
+access because they contain or might contain sensitive information. Those
+objects are:
+
+     - .\SMSF-security.ps1
+
+General Windows Security Hardening techniques apply depending, of course, on
+your particular case. Nevertheless, there are some big security measures that
+you can try:
+
+  1. Set up ACLs in NTFS accordingly.
+
+  2. Set up NTFS auditing accordingly.
+
+  3. Set up Monitoring and Alerts on the Windows Security Events that
+     correspond to your auditing settings.
+
+  4. Consider using file system encryption if appropriate under your environmental conditions.
+
+  5. DELETE files containing sensitive information with a Secure File Wiping utility.
