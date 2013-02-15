@@ -1,0 +1,82 @@
+   Social Media Scripting Framework v0.2 BETA
+   -----------------------------------------------------------------------------
+
+
+A. RELEASE NOTES:
+   =============================================================================
+
+1. Available modules:
+
+   + Social Media:    Twitter, Facebook, LinkedIn, Bitly.com
+   + General Purpose: Data Sets, Web browsing
+   + Data Stores:     Excel
+
+2. Twitter:
+
+   + Full Support of API 1.1.
+   + Web scrapping helper functions.
+   + Timeline normalization.
+   + Timeline analysis.
+   + Custom Timeline rebuilding.
+   + Other high-level abstractions:
+     + Send-Tweet.
+     + Get-TwitterSerch.
+     + Get-TweetsFromUser.
+     + Get-TwitterFollowers.
+     + Get-TwitterProfile.
+
+3. Facebook:
+
+   + Partial native API support.
+   + Web scrapping helper functions.
+   + Timeline normalization.
+   + Timeline analysis.
+   + Custom Timeline rebuilding.
+   + Other high-level abstractions:
+     + Get-FBTimeLineProspects
+
+4. LinkedIn:
+
+   + Web scrapping helper functions: Groups & Company Pages.
+   + Custom Timeline rebuilding.
+
+5. Bitly.com:
+
+   + Web scrapping helper functions.
+
+6. Data Sets:
+
+   + Load/Save to XML.
+   + Dynamic & 'relaxed' DataSet mapping.
+
+7. Excel:
+
+   + Primitive operations: Load, Save, Update.
+
+
+B. KNOWN ISSUES:
+   =============================================================================
+
+1. Facebook:
+
+   + Current implementation doesn't make consume the Facebook Insights API.
+   + Prospect list is known to be accurate though incomplete. It seems to be a
+     problem or limitation with the current implementation of the Facebook Module.
+
+2. Data Sets:
+
+   + The Update-DataSet command add an additional $null object as the first element
+     of the object collection that creats as its output. The source of this problem
+     is still under research.
+
+     $UpdatedCampaign = Update-DataSet $campaign -with $FBTimeLine -using $FBMappingRules
+
+     WORKAROUND:
+
+     $UpdatedCampaign = $(Update-DataSet $campaign -with $FBTimeLine -using $MappingRules) -ne $null
+
+3. General:
+
+   + Current Libraries don't work reliably under a PowerShell Module. However, they do
+     work perfectly fine as standalone functions under the context of the 'Social Media
+     Scripting Console'. The source of this problem is still under research.
