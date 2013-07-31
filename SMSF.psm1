@@ -1,13 +1,7 @@
-$InstallDir   = $( Get-ChildItem $MyInvocation.InvocationName | Select-Object Directory |
-                   Format-Table -AutoSize -HideTableHeaders | Out-String ).Trim()
+$InstallDir = split-path -parent $MyInvocation.MyCommand.Definition
 
-if ( $InstallDir.Split(":").Length -gt 2 ) {
-  $InstallDir = $( Get-Location | Select-Object Path |
-                   Format-Table -AutoSize -HideTableHeaders | Out-String ).Trim()
-}
-
-
-# . $InstallDir\SMSF-settings.ps1
+. $InstallDir\SMSF-security.ps1
+. $InstallDir\SMSF-settings.ps1
 . $InstallDir\SMSF-functions.ps1
 
 . $InstallDir\PSBrowsingModule.ps1

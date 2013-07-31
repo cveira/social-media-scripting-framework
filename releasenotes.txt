@@ -74,9 +74,3 @@ B. KNOWN ISSUES:
      WORKAROUND:
 
      $UpdatedCampaign = $(Update-DataSet $campaign -with $FBTimeLine -using $MappingRules) -ne $null
-
-3. General:
-
-   + Current Libraries don't work reliably under a PowerShell Module. However, they do
-     work perfectly fine as standalone functions under the context of the 'Social Media
-     Scripting Console'. The source of this problem is still under research.
