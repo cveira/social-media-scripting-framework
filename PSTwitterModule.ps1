@@ -827,7 +827,7 @@ function Send-Tweet ( [string] $TweetMessage ) {
   [string] $HttpQueryString    = ""
   [string] $TwitterRawResponse = ""
 
-  [string] $ApiURL             = "http://api.twitter.com/1.1/statuses/update.json"
+  [string] $ApiURL             = "https://api.twitter.com/1.1/statuses/update.json"
 
 
   if ( $TweetMessage.Length -gt 140 ) {
