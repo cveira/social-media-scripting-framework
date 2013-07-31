@@ -1177,7 +1177,7 @@ function Get-RawTwitterUserAsJson( [string] $UserName ) {
     $HttpEndpoint           = $ApiURL
     $HttpQueryString        = ""
   }
-
+  
   $OAuthConsumerKey            = $TwitterConsumerKey
   $OAuthConsumerSecret         = $TwitterConsumerSecret
   $OAuthToken                  = $TwitterAccessToken
@@ -1947,7 +1947,7 @@ function Get-TwitterSearch( [string] $query, [int] $results = 20, [string] $lang
 
 
   if ( $results -lt $TwitterMaxResults ) {
-    $tweets          = ( Get-RawTwitterSearchAsJson -query $query -ResultsPerPage $results -Language $language -ResultType $type -StartDate $StartDate -GeoCode $GeoCode ).statuses | ConvertFrom-Json
+    $tweets          = (( Get-RawTwitterSearchAsJson -query $query -ResultsPerPage $results -Language $language -ResultType $type -StartDate $StartDate -GeoCode $GeoCode ) | ConvertFrom-Json).statuses
   } else {
     $MaxId           = 0
     $ExecutionTime   = [Diagnostics.Stopwatch]::StartNew()
