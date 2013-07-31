@@ -25,7 +25,7 @@ A. SYSTEM REQUIREMENTS:
 B. INITIAL CONFIGURATION STEPS:
    =============================================================================
 
-1. Decompress SMSF package (C:\SMSF, for example).
+1. Decompress SMSF package to %HOMEPATH%\Documents\WindowsPowerShell\Modules\SMSF
 
 2. Setup up your Twitter Credentials:
 
@@ -61,8 +61,21 @@ B. INITIAL CONFIGURATION STEPS:
 4. Review & Edit Data Set mapping rules contained in 'SMSF-settings.ps1' according to your
    particular needs.
 
+C. IMPORTING MODULE INTO CURRENT SESSION:
+   =============================================================================
 
-C. OPENING THE SOCIAL MEDIA SCRIPTING CONSOLE:
+   If you have installed the framework in %HOMEPATH%\Documents\WindowsPowerShell\Modules\SMSF, PowerShell will automatically detect module.
+
+   To import module into current PS session run command:
+
+   > Import-Module SMSF
+
+   If you wish SMSF module to import automatically open/create %HOMEPATH%\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1 and insert line:
+
+   Import-Module SMSF
+
+
+D. OPENING THE SOCIAL MEDIA SCRIPTING CONSOLE: (OPTIONAL)
    =============================================================================
 
    If you have installed the framework in 'C:\SMSF', run the following commands from a PowerShell
@@ -72,7 +85,7 @@ C. OPENING THE SOCIAL MEDIA SCRIPTING CONSOLE:
      PS C:\SMSF> .\SMSC.ps1
 
 
-D. SECURITY CONSIDERATIONS:
+E. SECURITY CONSIDERATIONS:
    =============================================================================
 
 There are certain files and folders that should be protected from unauthorized
