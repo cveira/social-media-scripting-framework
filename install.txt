@@ -14,12 +14,7 @@ A. SYSTEM REQUIREMENTS:
 
    http://facebookpsmodule.codeplex.com/
 
-3. System Locale configured to: 'en-US'
-
-   'Control Panel' > 'Region & Language' > 'Administrative Tab':
-     'Language for non-Unicode Programs' = 'English (United States)'
-
-4. To take advantaje of the Microsoft Excel features, you should have a working
+3. To take advantaje of the Microsoft Excel features, you should have a working
    copy of it installed too.
 
    NOTE: I couldn't test this sofware release against Excel 2010. Other

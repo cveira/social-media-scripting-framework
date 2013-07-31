@@ -264,7 +264,7 @@ function Get-RawTweetRetweetedByAsXml( [string] $TweetPermaLink ) {
   $OAuthTokenSecret            = $TwitterAccessTokenSecret
 
   $OAuthNonce                  = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes([System.DateTime]::Now.Ticks.ToString()))
-  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::ParseExact("01/01/1970", "dd/MM/yyyy", $null).ToUniversalTime()
+  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::Parse("01/01/1970", [CultureInfo]::InvariantCulture).ToUniversalTime()
   $OAuthTimeStamp              = [System.Convert]::ToInt64($TimeStamp.TotalSeconds).ToString()
 
   $OAuthSignature              = Set-OAuthSignature $HttpRequestType $HttpEndpoint $HttpQueryString $OAuthNonce $OAuthTimeStamp $OAuthConsumerKey $OAuthConsumerSecret $OAuthToken $OAuthTokenSecret
@@ -313,7 +313,7 @@ function Get-RawTweetRetweetedBy( [string] $TweetPermaLink ) {
   $OAuthTokenSecret            = $TwitterAccessTokenSecret
 
   $OAuthNonce                  = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes([System.DateTime]::Now.Ticks.ToString()))
-  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::ParseExact("01/01/1970", "dd/MM/yyyy", $null).ToUniversalTime()
+  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::Parse("01/01/1970", [CultureInfo]::InvariantCulture).ToUniversalTime()
   $OAuthTimeStamp              = [System.Convert]::ToInt64($TimeStamp.TotalSeconds).ToString()
 
   $OAuthSignature              = Set-OAuthSignature $HttpRequestType $HttpEndpoint $HttpQueryString $OAuthNonce $OAuthTimeStamp $OAuthConsumerKey $OAuthConsumerSecret $OAuthToken $OAuthTokenSecret
@@ -379,7 +379,7 @@ function Get-RawTwitterMentionsAsJson {
   $OAuthTokenSecret            = $TwitterAccessTokenSecret
 
   $OAuthNonce                  = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes([System.DateTime]::Now.Ticks.ToString()))
-  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::ParseExact("01/01/1970", "dd/MM/yyyy", $null).ToUniversalTime()
+  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::Parse("01/01/1970", [CultureInfo]::InvariantCulture).ToUniversalTime()
   $OAuthTimeStamp              = [System.Convert]::ToInt64($TimeStamp.TotalSeconds).ToString()
 
   $OAuthSignature              = Set-OAuthSignature $HttpRequestType $HttpEndpoint $HttpQueryString $OAuthNonce $OAuthTimeStamp $OAuthConsumerKey $OAuthConsumerSecret $OAuthToken $OAuthTokenSecret
@@ -433,7 +433,7 @@ function Get-RawTweetRetweetsAsJson( [string] $TweetPermaLink ) {
   $OAuthTokenSecret            = $TwitterAccessTokenSecret
 
   $OAuthNonce                  = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes([System.DateTime]::Now.Ticks.ToString()))
-  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::ParseExact("01/01/1970", "dd/MM/yyyy", $null).ToUniversalTime()
+  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::Parse("01/01/1970", [CultureInfo]::InvariantCulture).ToUniversalTime()
   $OAuthTimeStamp              = [System.Convert]::ToInt64($TimeStamp.TotalSeconds).ToString()
 
   $OAuthSignature              = Set-OAuthSignature $HttpRequestType $HttpEndpoint $HttpQueryString $OAuthNonce $OAuthTimeStamp $OAuthConsumerKey $OAuthConsumerSecret $OAuthToken $OAuthTokenSecret
@@ -486,7 +486,7 @@ function Get-RawTwitterUserAsJson( [string] $UserName ) {
   $OAuthTokenSecret            = $TwitterAccessTokenSecret
 
   $OAuthNonce                  = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes([System.DateTime]::Now.Ticks.ToString()))
-  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::ParseExact("01/01/1970", "dd/MM/yyyy", $null).ToUniversalTime()
+  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::Parse("01/01/1970", [CultureInfo]::InvariantCulture).ToUniversalTime()
   $OAuthTimeStamp              = [System.Convert]::ToInt64($TimeStamp.TotalSeconds).ToString()
 
   $OAuthSignature              = Set-OAuthSignature $HttpRequestType $HttpEndpoint $HttpQueryString $OAuthNonce $OAuthTimeStamp $OAuthConsumerKey $OAuthConsumerSecret $OAuthToken $OAuthTokenSecret
@@ -539,7 +539,7 @@ function Get-RawTweetAsJson( [string] $TweetPermaLink ) {
   $OAuthTokenSecret            = $TwitterAccessTokenSecret
 
   $OAuthNonce                  = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes([System.DateTime]::Now.Ticks.ToString()))
-  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::ParseExact("01/01/1970", "dd/MM/yyyy", $null).ToUniversalTime()
+  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::Parse("01/01/1970", [CultureInfo]::InvariantCulture).ToUniversalTime()
   $OAuthTimeStamp              = [System.Convert]::ToInt64($TimeStamp.TotalSeconds).ToString()
 
   $OAuthSignature              = Set-OAuthSignature $HttpRequestType $HttpEndpoint $HttpQueryString $OAuthNonce $OAuthTimeStamp $OAuthConsumerKey $OAuthConsumerSecret $OAuthToken $OAuthTokenSecret
@@ -592,7 +592,7 @@ function Get-RawTwitterFavoritesAsJson( [string] $UserName ) {
   $OAuthTokenSecret            = $TwitterAccessTokenSecret
 
   $OAuthNonce                  = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes([System.DateTime]::Now.Ticks.ToString()))
-  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::ParseExact("01/01/1970", "dd/MM/yyyy", $null).ToUniversalTime()
+  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::Parse("01/01/1970", [CultureInfo]::InvariantCulture).ToUniversalTime()
   $OAuthTimeStamp              = [System.Convert]::ToInt64($TimeStamp.TotalSeconds).ToString()
 
   $OAuthSignature              = Set-OAuthSignature $HttpRequestType $HttpEndpoint $HttpQueryString $OAuthNonce $OAuthTimeStamp $OAuthConsumerKey $OAuthConsumerSecret $OAuthToken $OAuthTokenSecret
@@ -649,7 +649,7 @@ function Get-RawTweetsFromUserAsJson( [string] $UserName, [int] $results = 20, [
   $OAuthTokenSecret            = $TwitterAccessTokenSecret
 
   $OAuthNonce                  = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes([System.DateTime]::Now.Ticks.ToString()))
-  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::ParseExact("01/01/1970", "dd/MM/yyyy", $null).ToUniversalTime()
+  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::Parse("01/01/1970", [CultureInfo]::InvariantCulture).ToUniversalTime()
   $OAuthTimeStamp              = [System.Convert]::ToInt64($TimeStamp.TotalSeconds).ToString()
 
   $OAuthSignature              = Set-OAuthSignature $HttpRequestType $HttpEndpoint $HttpQueryString $OAuthNonce $OAuthTimeStamp $OAuthConsumerKey $OAuthConsumerSecret $OAuthToken $OAuthTokenSecret
@@ -702,7 +702,7 @@ function Get-RawTwitterTimeLineAsJson {
   $OAuthTokenSecret            = $TwitterAccessTokenSecret
 
   $OAuthNonce                  = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes([System.DateTime]::Now.Ticks.ToString()))
-  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::ParseExact("01/01/1970", "dd/MM/yyyy", $null).ToUniversalTime()
+  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::Parse("01/01/1970", [CultureInfo]::InvariantCulture).ToUniversalTime()
   $OAuthTimeStamp              = [System.Convert]::ToInt64($TimeStamp.TotalSeconds).ToString()
 
   $OAuthSignature              = Set-OAuthSignature $HttpRequestType $HttpEndpoint $HttpQueryString $OAuthNonce $OAuthTimeStamp $OAuthConsumerKey $OAuthConsumerSecret $OAuthToken $OAuthTokenSecret
@@ -790,7 +790,7 @@ function Get-RawTwitterSearchAsJson( [string] $query, [int] $ResultsPerPage = 20
   $OAuthTokenSecret            = $TwitterAccessTokenSecret
 
   $OAuthNonce                  = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes([System.DateTime]::Now.Ticks.ToString()))
-  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::ParseExact("01/01/1970", "dd/MM/yyyy", $null).ToUniversalTime()
+  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::Parse("01/01/1970", [CultureInfo]::InvariantCulture).ToUniversalTime()
   $OAuthTimeStamp              = [System.Convert]::ToInt64($TimeStamp.TotalSeconds).ToString()
 
   $OAuthSignature              = Set-OAuthSignature $HttpRequestType $HttpEndpoint $HttpQueryString $OAuthNonce $OAuthTimeStamp $OAuthConsumerKey $OAuthConsumerSecret $OAuthToken $OAuthTokenSecret
@@ -851,7 +851,7 @@ function Send-Tweet ( [string] $TweetMessage ) {
   $OAuthTokenSecret            = $TwitterAccessTokenSecret
 
   $OAuthNonce                  = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes([System.DateTime]::Now.Ticks.ToString()))
-  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::ParseExact("01/01/1970", "dd/MM/yyyy", $null).ToUniversalTime()
+  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::Parse("01/01/1970", [CultureInfo]::InvariantCulture).ToUniversalTime()
   $OAuthTimeStamp              = [System.Convert]::ToInt64($TimeStamp.TotalSeconds).ToString()
 
   $OAuthSignature              = Set-OAuthSignature $HttpRequestType $HttpEndpoint $HttpQueryString $OAuthNonce $OAuthTimeStamp $OAuthConsumerKey $OAuthConsumerSecret $OAuthToken $OAuthTokenSecret
@@ -914,7 +914,7 @@ function Get-RawTwitterListSubscribersAsJson( [string] $TweetPermaLink, [string]
   $OAuthTokenSecret            = $TwitterAccessTokenSecret
 
   $OAuthNonce                  = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes([System.DateTime]::Now.Ticks.ToString()))
-  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::ParseExact("01/01/1970", "dd/MM/yyyy", $null).ToUniversalTime()
+  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::Parse("01/01/1970", [CultureInfo]::InvariantCulture).ToUniversalTime()
   $OAuthTimeStamp              = [System.Convert]::ToInt64($TimeStamp.TotalSeconds).ToString()
 
   $OAuthSignature              = Set-OAuthSignature $HttpRequestType $HttpEndpoint $HttpQueryString $OAuthNonce $OAuthTimeStamp $OAuthConsumerKey $OAuthConsumerSecret $OAuthToken $OAuthTokenSecret
@@ -968,7 +968,7 @@ function Get-RawTwitterListMembersAsJson( [string] $TweetPermaLink, [string] $Pa
   $OAuthTokenSecret            = $TwitterAccessTokenSecret
 
   $OAuthNonce                  = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes([System.DateTime]::Now.Ticks.ToString()))
-  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::ParseExact("01/01/1970", "dd/MM/yyyy", $null).ToUniversalTime()
+  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::Parse("01/01/1970", [CultureInfo]::InvariantCulture).ToUniversalTime()
   $OAuthTimeStamp              = [System.Convert]::ToInt64($TimeStamp.TotalSeconds).ToString()
 
   $OAuthSignature              = Set-OAuthSignature $HttpRequestType $HttpEndpoint $HttpQueryString $OAuthNonce $OAuthTimeStamp $OAuthConsumerKey $OAuthConsumerSecret $OAuthToken $OAuthTokenSecret
@@ -1022,7 +1022,7 @@ function Get-RawTwitterListTimeLineAsJson( [string] $TweetPermaLink, [int] $Resu
   $OAuthTokenSecret            = $TwitterAccessTokenSecret
 
   $OAuthNonce                  = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes([System.DateTime]::Now.Ticks.ToString()))
-  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::ParseExact("01/01/1970", "dd/MM/yyyy", $null).ToUniversalTime()
+  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::Parse("01/01/1970", [CultureInfo]::InvariantCulture).ToUniversalTime()
   $OAuthTimeStamp              = [System.Convert]::ToInt64($TimeStamp.TotalSeconds).ToString()
 
   $OAuthSignature              = Set-OAuthSignature $HttpRequestType $HttpEndpoint $HttpQueryString $OAuthNonce $OAuthTimeStamp $OAuthConsumerKey $OAuthConsumerSecret $OAuthToken $OAuthTokenSecret
@@ -1076,7 +1076,7 @@ function Get-RawTwitterUserFriendsFromUserAsJson( [string] $UserName, [string] $
   $OAuthTokenSecret            = $TwitterAccessTokenSecret
 
   $OAuthNonce                  = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes([System.DateTime]::Now.Ticks.ToString()))
-  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::ParseExact("01/01/1970", "dd/MM/yyyy", $null).ToUniversalTime()
+  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::Parse("01/01/1970", [CultureInfo]::InvariantCulture).ToUniversalTime()
   $OAuthTimeStamp              = [System.Convert]::ToInt64($TimeStamp.TotalSeconds).ToString()
 
   $OAuthSignature              = Set-OAuthSignature $HttpRequestType $HttpEndpoint $HttpQueryString $OAuthNonce $OAuthTimeStamp $OAuthConsumerKey $OAuthConsumerSecret $OAuthToken $OAuthTokenSecret
@@ -1130,7 +1130,7 @@ function Get-RawTwitterFollowersFromUserAsJson( [string] $UserName, [string] $Pa
   $OAuthTokenSecret            = $TwitterAccessTokenSecret
 
   $OAuthNonce                  = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes([System.DateTime]::Now.Ticks.ToString()))
-  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::ParseExact("01/01/1970", "dd/MM/yyyy", $null).ToUniversalTime()
+  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::Parse("01/01/1970", [CultureInfo]::InvariantCulture).ToUniversalTime()
   $OAuthTimeStamp              = [System.Convert]::ToInt64($TimeStamp.TotalSeconds).ToString()
 
   $OAuthSignature              = Set-OAuthSignature $HttpRequestType $HttpEndpoint $HttpQueryString $OAuthNonce $OAuthTimeStamp $OAuthConsumerKey $OAuthConsumerSecret $OAuthToken $OAuthTokenSecret
@@ -1184,7 +1184,7 @@ function Get-RawTwitterUserAsJson( [string] $UserName ) {
   $OAuthTokenSecret            = $TwitterAccessTokenSecret
 
   $OAuthNonce                  = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes([System.DateTime]::Now.Ticks.ToString()))
-  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::ParseExact("01/01/1970", "dd/MM/yyyy", $null).ToUniversalTime()
+  $TimeStamp                   = [System.DateTime]::UtcNow - [System.DateTime]::Parse("01/01/1970", [CultureInfo]::InvariantCulture).ToUniversalTime()
   $OAuthTimeStamp              = [System.Convert]::ToInt64($TimeStamp.TotalSeconds).ToString()
 
   $OAuthSignature              = Set-OAuthSignature $HttpRequestType $HttpEndpoint $HttpQueryString $OAuthNonce $OAuthTimeStamp $OAuthConsumerKey $OAuthConsumerSecret $OAuthToken $OAuthTokenSecret
