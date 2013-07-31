@@ -68,11 +68,11 @@ C. IMPORTING MODULE INTO CURRENT SESSION:
 
    To import module into current PS session run command:
 
-   > Import-Module SMSF
+   > Import-Module SMSF -DisableNameChecking
 
    If you wish SMSF module to import automatically open/create %HOMEPATH%\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1 and insert line:
 
-   Import-Module SMSF
+   Import-Module SMSF -DisableNameChecking
 
 
 D. OPENING THE SOCIAL MEDIA SCRIPTING CONSOLE: (OPTIONAL)
