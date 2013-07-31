@@ -1229,12 +1229,10 @@ function Get-UnpagedFollowerList( [object[]] $PagedFollowersList ) {
   $UnpagedFollowers
 }
 
-
 function Get-TwitterFollowers( [string] $UserName ) {
   begin {
     [PSCustomObject[]] $RawFollowersPages = @()
     $CurrentPage                          = $null
-    $TimeToWait                           = 66
     $FollowersPerPage                     = 20
     $PageCount                            = 0
     [int] $TotalFollowers                 = ( Get-RawTwitterUserAsJson $UserName | ConvertFrom-JSON ).followers_count
@@ -1251,11 +1249,9 @@ function Get-TwitterFollowers( [string] $UserName ) {
 
         $PageCount++
 
+		$CurrentPage        = Get-RawTwitterFollowersFromUserAsJson $UserName -PageId $CurrentPage.next_cursor | ConvertFrom-JSON
+
         $RawFollowersPages += $CurrentPage
-
-        Start-Sleep -Seconds $TimeToWait
-
-        $CurrentPage        = Get-RawTwitterFollowersFromUserAsJson $UserName -PageId $CurrentPage.next_cursor | ConvertFrom-JSON
       } until ( $CurrentPage.next_cursor -eq 0 )
     } catch {
       [PSCustomObject[]] $RawFollowersPages = @()
@@ -1265,10 +1261,8 @@ function Get-TwitterFollowers( [string] $UserName ) {
 
   end {
     Get-UnpagedFollowerList $RawFollowersPages
-    # $RawFollowersPages
   }
 }
-
 
 function Get-TweetsFromUser( [string] $UserName, [int] $results = 20, [switch] $quick, [switch] $IncludeAll ) {
   # Get-TweetsFromUser cveira -results 250 -quick
