@@ -878,7 +878,7 @@ function Send-Tweet ( [string] $TweetMessage ) {
 
     if ( $response -ne $null ) {
       $ResponseStream = New-Object System.IO.StreamReader($response.GetResponseStream())
-      $ResponseStream.ReadToEnd().Trim()
+      $ResponseStream.ReadToEnd().Trim() | ConvertFrom-Json
     }
 
     $response.Close()
