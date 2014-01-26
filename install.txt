@@ -1,5 +1,5 @@
 A. SYSTEM REQUIREMENTS:
-   =============================================================================
+   =================================================================================================
 
 1. A working PowerShell v3 installation configured to run scripts. The full
    Windows Management Framework is recommended.
@@ -14,61 +14,104 @@ A. SYSTEM REQUIREMENTS:
 
    http://facebookpsmodule.codeplex.com/
 
-3. System Locale configured to: 'en-US'
-
-   'Control Panel' > 'Region & Language' > 'Administrative Tab':
-     'Language for non-Unicode Programs' = 'English (United States)'
-
-4. To take advantaje of the Microsoft Excel features, you should have a working
-   copy of it installed too.
-
-   NOTE: I couldn't test this sofware release against Excel 2010. Other
-   versions should work too, but I actually didn't test it. If you do, just let
-   me know under which ones work and which raise problems.
-
 
 B. INITIAL CONFIGURATION STEPS:
-   =============================================================================
+   =================================================================================================
 
-1. Decompress SMSF package (C:\SMSF, for example).
+1. Create an installation folder and decompress the SMSF package there.
 
-2. Setup up your Twitter Credentials:
+   NOTE: We are going to use/assume 'C:\SMSF' in the examples below.
 
-   Step 1: Register SMSF as one of your Twitter applications in https://dev.twitter.com/apps
+2. Go to the folder '<InstallDir>\profiles\master' and remove the '.master' extension on those files
+     that happen to have it.
 
-   Step 2: Update your Access Token if necessary.
+3. Launch the the Social Media Scripting Console (SMSC):
 
-   Step 3: Edit the file 'SMSF-security.ps1' and update each setting with the correct values.
+   PS C:\SMSF> .\SMSC.ps1
 
-3. Set up your Facebook Credentials
+4. Setup up your Twitter Credentials:
 
-   Step 1: Open a PowerShell console in STA mode:
-     C:\> powershell.exe -STA
+   Step 1: Register SMSF as one of your Twitter applications at https://dev.twitter.com/apps
 
-   Step 2: Run the following command:
-     PS C:\> New-FBConnection
+   Step 2: Edit the file '<InstallDir>\profiles\master\connections.ps1' and update each setting with
+     under the Twitter branch with the correct values. Namely, 'ConsumerKey', 'ConsumerSecret',
+     'AccessToken' and 'AccessTokenSecret'.
 
-   Step 3: Introduce your Facebook credentials on the pop-up window.
-     NOTE: Select the 'Keep me logged in' option!
+5. Setup up your LinkedIn Credentials:
 
-   Step 4: Run the following commands:
-     PS C:\> Get-FBPage | Select name, PageId, category | Format-Table -AutoSize
+   Step 1: Register SMSF as one of your LinkedIn applications at https://www.linkedin.com/secure/developer
 
-   Step 5: Select/Copy the PageId of the Page you want to operate in.
+   Step 2: Edit the file '<InstallDir>\profiles\master\connections.ps1' and update each setting with
+     under the LinkedIn branch with the correct values. Namely, 'ApiKey', 'SecretKey', 'UserToken',
+     and 'UserSecret'.
 
-   Step 6: Edit the file 'SMSF-security.ps1' and update the 'FBDefaultPageId' value accordingly.
+   Step 3: From the Social Media Scripting Console (SMSC), run the following commands:
 
-   Step 7: Run the following command:
-     PS C:\> ( New-FBConnection -PageId <YourPageId> -ExtendToken ).AccessToken
+     >> SMSC [1] > Get-RawLINCompanyIdByDomain -domain "<YourEmailDomainName>" -NamePattern "<YourCompanyName>"
+     >> SMSC [1] > Get-RawLINGroupIdByName -name "<YourGroupName>"
 
-   Step 8: Edit the file 'SMSF-security.ps1' and update the 'FBAccessToken' value accordingly.
+   Step 4: Edit the file '<InstallDir>\profiles\master\connections.ps1' and update each setting with
+     under the LinkedIn branch with the correct values. Namely, 'DefaultCompanyId', 'DefaultCompanyName',
+     'DefaultGroupId', and 'DefaultGroupName'.
 
-4. Review & Edit Data Set mapping rules contained in 'SMSF-settings.ps1' according to your
-   particular needs.
+   Step 5: Edit the file '<InstallDir>\profiles\master\connections.ps1' and update the 'RedirectUri'
+     property under the LinkedIn branch with the correct value for your case.
+
+6. Set up your Facebook Credentials
+
+   Step 1: From the Social Media Scripting Console (SMSC), run the following command:
+
+     >> SMSC [1] > New-FBConnectionDetails
+
+     NOTE: On the credentials window, select the 'Keep me logged in' option!
+
+   Step 2: Edit the file '<InstallDir>\profiles\master\connections.ps1' and update each setting with
+     under the Facebook branch with the correct values. Namely, 'DefaultPageId', 'DefaultPageName'
+     and 'AccessToken'.
+
+7. Setup up your Bitly.com Credentials:
+
+   Step 1: From the Social Media Scripting Console (SMSC), run the following command:
+
+     >> SMSC [1] > Get-BLOAuthToken -UserName <YourUserName> -Password <YourPassword>
+
+   Step 2: Edit the file '<InstallDir>\profiles\master\connections.ps1' and update each setting with
+     under the BitLy branch with the correct values. Namely, 'UserName' and 'AccessToken'.
+
+   Step 3: Edit the file '<InstallDir>\profiles\master\connections.ps1' and update the 'RedirectUri'
+     property under the Bitly branch with the correct value for your case.
+
+8. Set up your Feeds Data Sources
+
+   Step 1: Create/Build an OPML file with all the RSS feeds that you want to process and place the
+     file on the followin location. '<InstallDir>\profiles\master'. The default file name for the
+     OPML file is 'FeedSubscriptions.xml', but you can use the one of your choosing.
+
+   Step 2: Edit the file '<InstallDir>\profiles\master\connections.ps1' and update the
+     'DefaultFeedSource' value accordingly.
+
+9. Review & Edit Data Set mapping rules contained in '<InstallDir>\profiles\master\update-rules.ps1'
+   according to your particular needs.
+
+10. Review & Edit settings according to your particular needs for options stored on the following
+    locatons:
+
+   - '<InstallDir>\settings.ps1'
+   - '<InstallDir>\profiles\master\settings.ps1'
+   - '<InstallDir>\profiles\<ProfileName>\settings.ps1'
+
+   Usually, the settings that you might, eventually, interested on customizing would be:
+   'DefaultProfileName', 'ForcedSessionId', 'DefaultSessionStore' and 'HashingMasterKey'. However,
+   default values are fine to begin with.
+
+11. Reload the Social Media Scripting Console (SMSC) so that the new settings get loaded:
+
+   >> SMSC [1] > exit
+   PS C:\SMSF> .\SMSC.ps1
 
 
 C. OPENING THE SOCIAL MEDIA SCRIPTING CONSOLE:
-   =============================================================================
+   =================================================================================================
 
    If you have installed the framework in 'C:\SMSF', run the following commands from a PowerShell
    console:
@@ -78,25 +121,35 @@ C. OPENING THE SOCIAL MEDIA SCRIPTING CONSOLE:
 
 
 D. SECURITY CONSIDERATIONS:
-   =============================================================================
+   =================================================================================================
 
-There are certain files and folders that should be protected from unauthorized
-access because they contain or might contain sensitive information. Those
-objects are:
+There are certain files and folders that should be protected from unauthorized access because they
+contain or might contain sensitive information. Those are located under the following paths:
 
-     - .\SMSF-security.ps1
+  - '<InstallDir>\profiles\master'
+  - '<InstallDir>\profiles\<ProfileName>'
 
-General Windows Security Hardening techniques apply depending, of course, on
-your particular case. Nevertheless, there are some big security measures that
-you can try:
+By sensitive information we mean:
+
+  - Access credentials.
+  - Log files that might leak, eventually, confidential information.
+  - Cached objects containing personal information coming from Digital Media.
+  - Data sets containing personal information coming from Digital Media.
+
+General Windows Security Hardening techniques apply depending, of course, on your particular case.
+Anyway, and assuming that your Digital Identity is managed appropriately from a Security stand point,
+there are some easy and effective security measures that you can try:
 
   1. Set up ACLs in NTFS accordingly.
 
   2. Set up NTFS auditing accordingly.
 
-  3. Set up Monitoring and Alerts on the Windows Security Events that
-     correspond to your auditing settings.
+  3. Set up Monitoring and Alerts on the Windows Security Events that correspond to your auditing
+     settings.
 
-  4. Consider using file system encryption if appropriate under your environmental conditions.
+  4. Consider using file system or drive encryption technologies when appropriate.
 
-  5. DELETE files containing sensitive information with a Secure File Wiping utility.
+  5. When deleting files containing sensitive information, use a Secure File Wiping utility.
+
+NOTE: Please, pay special attention to Security measures when deploying SMSF on a Virtual Machine
+hosted on a Cloud Service.

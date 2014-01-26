@@ -25,4 +25,3 @@ This Framework is not for software developers, although they could actually enjo
   * https://github.com/cveira/social-media-scripting-framework
   * https://code.google.com/p/social-media-scripting-framework/
   * http://sourceforge.net/projects/smsf/
-

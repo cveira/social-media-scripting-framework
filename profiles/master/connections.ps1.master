@@ -1,0 +1,96 @@
+$channels = @"
+{
+  "Feeds" : {
+    "DefaultFeedSource"      : "FeedSubscriptions.xml",
+    "PostsCacheExpiration"   : 24,
+    "PrivacyLevel"           : $PRIVACY_LEVEL_NONE,
+    "DataRetention"          : 365,
+    "ApiDelay"               : 0
+  },
+
+  "Twitter" : {
+    "ConsumerKey"            : "<ConsumerKey>",
+    "ConsumerSecret"         : "<ConsumerSecret>",
+    "AccessToken"            : "<AccessToken>",
+    "AccessTokenSecret"      : "<AccessTokenSecret>",
+
+    "TimeOut"                : 180000,
+    "PrivacyLevel"           : $PRIVACY_LEVEL_NONE,
+    "DataRetention"          : 365,
+
+    "DefaultUserName"        : "<DefaultUserName>",
+    "TrackedUsersList"       : ["<DefaultUserName>", "<UserName2>"],
+    "DefaultResultsToReturn" : 20,
+
+    "ApiMaxResults"          : 100,
+    "ApiDelayForTweets"      : 6,
+    "ApiDelayForSearch"      : 6,
+    "ApiDelayForRTs"         : 66,
+    "ApiDelayForFavs"        : 66,
+    "ApiDelayForFollowers"   : 66,
+    "ApiDelayForProfiles"    : 66
+  },
+
+  "Facebook" : {
+    "DefaultPageId"          : "<DefaultPageId>",
+    "DefaultPageName"        : "<DefaultPageName>",
+    "AccessToken"            : "<AccessToken>",
+    "connection"             : "",
+    "PostsCacheExpiration"   : 24,
+    "PrivacyLevel"           : $PRIVACY_LEVEL_NONE,
+    "DataRetention"          : 365,
+    "ApiDelay"               : 5
+  },
+
+  "LinkedIn" : {
+    "DefaultCompanyId"                   : "<DefaultCompanyId>",
+    "DefaultCompanyName"                 : "<DefaultCompanyName>",
+    "DefaultGroupId"                     : "<DefaultGroupId>",
+    "DefaultGroupName"                   : "<DefaultGroupName>",
+    "DefaultResultsToReturn"             : 20,
+    "RedirectUri"                        : "http://<domain.com>",
+    "ApiKey"                             : "<ApiKey>",
+    "SecretKey"                          : "<SecretKey>",
+    "AccessToken"                        : "<AccessToken>",
+    "UserToken"                          : "<UserToken>",
+    "UserSecret"                         : "<UserSecret>",
+    "AuthenticationEndpoint"             : "https://www.linkedin.com/uas/oauth2/authorization",
+    "AuthorizationEndpoint"              : "https://www.linkedin.com/uas/oauth2/accessToken?grant_type=authorization_code",
+    "PrivacyLevel"                       : $PRIVACY_LEVEL_NONE,
+    "DataRetention"                      : 365,
+    "ApiDelay"                           : 0,
+
+    "ApiUserGetOwnProfileDailyLimit"     : 100000,
+    "ApiUserSetPostDailyLimit"           : 100,
+    "ApiuserSetStatusUpdatesDailyLimit"  : 250,
+    "ApiUserSetNetworkUpdatesDailyLimit" : 20,
+    "ApiUserSetMessagingDailyLimit"      : 10,
+    "ApiUserSetInvitesDailyLimit"        : 500,
+
+    "ApiNetworkGetUpdatesDailyLimit"     : 300,
+    "ApiNetworkGetContactsDailyLimit"    : 1500,
+    "ApiNetworkGetSearchesDailyLimit"    : 400,
+    "ApiNetworkGetProfilesDailyLimit"    : 500,
+
+    "ApiGroupGetDetailsDailyLimit"       : 1000,
+    "ApiGroupGetPostDailyLimit"          : 1000,
+    "ApiGroupGetCommentsDailyLimit"      : 1000,
+    "ApiGroupSetPostDailyLimit"          : 100,
+
+    "ApiCompanyGetProfilesDailyLimit"    : 500,
+    "ApiCompanyGetPostsDailyLimit"       : 500,
+    "ApiCompanyGetSearchesDailyLimit"    : 500
+  },
+
+  "BitLy" : {
+    "RedirectUri"          : "http://<domain.com>",
+    "UserName"             : "<UserName>",
+    "Password"             : "",
+    "AccessToken"          : "<AccessToken>",
+
+    "TimeOut"              : 180000,
+    "PrivacyLevel"         : $PRIVACY_LEVEL_NONE,
+    "ApiDelay"             : 0
+  }
+}
+"@

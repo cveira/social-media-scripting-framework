@@ -1,0 +1,13 @@
+OPEN SOURCE LICENSES IN USE
+===========================
+
+1. Social Media Scripting Framework - GPL v2.0
+  http://www.gnu.org/licenses/gpl-2.0.html
+
+2. cURL - MIT/X derivative License
+  http://curl.haxx.se/docs/copyright.html
+
+3. EPPlus - GPL v2.1
+  https://epplus.codeplex.com/
+  https://epplus.codeplex.com/license
+  https://epplus.codeplex.com/SourceControl/latest

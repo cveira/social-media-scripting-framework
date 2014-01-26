@@ -2,8 +2,8 @@
 -------------------------------------------------------------------------------
 Name:    Social Media Scripting Framework
 Module:  Microsoft Excel
-Version: 0.2 BETA
-Date:    2013/02/03
+Version: 0.5 BETA
+Date:    2014/01/20
 Author:  Carlos Veira Lorenzo
          e-mail:   cveira [at] thinkinbig [dot] org
          blog:     thinkinbig.org
@@ -46,204 +46,579 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #>
 
 
-$HEADERS_ROW       = 2
 $FIRST_DATA_ROW    = 3
 $FIRST_DATA_COLUMN = 2
 
-
-function New-ExcelInstance() {
-  New-Object -COM Excel.Application
-}
+Add-Type -Path "$BinDir\EPPlus.dll"
 
 
-function Invoke-ExcelComMethod( [object] $instance, [string] $method, $parameters = $null ) {
-  # $book = Invoke-ExcelComMethod $excel Open ".\excel.xlsx"
+function Open-RawExcelFile( [string] $file ) {
+  <#
+    .SYNOPSIS
+      Opens an Excel file.
 
-  $CultureInfo = [System.Globalization.CultureInfo]'en-US'
+    .DESCRIPTION
+      Opens an Excel file.
 
-  $instance.Workbooks.PSBase.GetType().InvokeMember( $method, [Reflection.BindingFlags]::InvokeMethod, $null, $instance.Workbooks, $parameters, $CultureInfo )
-}
+    .EXAMPLE
+      $book = Open-RawExcelFile ".\excel.xlsx"
 
+    .NOTES
+      Low-level function.
 
-function Open-ExcelFile( [object] $instance, [string] $file ) {
-  # $book = Open-ExcelFile $excel ".\excel.xlsx"
+    .LINK
+      N/A
+  #>
+
 
   if ( Test-Path $file ) {
-    $FullName = ( Get-ChildItem $file ).FullName
+    try {
+      $FullName = ( Get-ChildItem $file ).FullName
 
-    # Invoke-ExcelComMethod $instance Open $file
-    $excel.Workbooks.Open( $FullName )
+       New-Object OfficeOpenXml.ExcelPackage $( [System.IO.FileInfo] $FullName )
+    } catch {
+      "$(get-date -format u) [Open-RawExcelFile] - Can't open the Excel file."                    >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+      "$(get-date -format u) [Open-RawExcelFile] -   File Name:         $file"                    >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+      "$(get-date -format u) [Open-RawExcelFile] -   Exception Details: $( $Error.Exception[0] )" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+      Write-Debug "[Open-RawExcelFile] - Can't open the Excel file."
+      Write-Debug "[Open-RawExcelFile] -   File Name:         $file"
+      Write-Debug "[Open-RawExcelFile] -   Exception Details: $( $Error.Exception[0] )"
+
+      return $null
+    }
   } else {
-    $null
+    "$(get-date -format u) [Open-RawExcelFile] - The file doesn't exist." >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+    "$(get-date -format u) [Open-RawExcelFile] -   File Name: $file"      >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+    Write-Debug "[Open-RawExcelFile] - The file doesn't exist."
+    Write-Debug "[Open-RawExcelFile] -   File Name: $file"
+
+    return $null
   }
 }
 
 
-function Save-ExcelFile( [object] $book ) {
-  # Save-ExcelFile $book
+function Get-RawExcelHeaders( $sheet, [int[]] $DataStart = @( $FIRST_DATA_ROW, $FIRST_DATA_COLUMN ) ) {
+  <#
+    .SYNOPSIS
+      Extracts the column structure for the especified excel sheet.
 
-  # Invoke-ExcelComMethod $book Save | Out-Null
-  $book.Save()
-}
+    .DESCRIPTION
+      Extracts the column structure for the especified excel sheet.
 
+    .EXAMPLE
+      $CampaignInfoSchema = Get-RawExcelHeaders -sheet $CampaignDataSource
+      $CampaignInfoSchema = Get-RawExcelHeaders -sheet $CampaignDataSource -DataStart 4,2
 
-function Save-ExcelFileAs( [object] $instance, [string] $FullFileName ) {
-  # Save-ExcelFileAs $book 'D:\FullPath\NewExcelFile.xlsx'
+    .NOTES
+      Low-level function.
 
-  if ( Test-Path $FullFileName ) {
-    $null
-  } else {
-    # Invoke-ExcelComMethod $instance SaveAs $FullFileName | Out-Null
-    $instance.SaveAs( $FullFileName )
-  }
-}
+    .LINK
+      N/A
+  #>
 
-
-function Close-ExcelFile( $instance, $book ) {
-  # execution pre-condicion: no concurrency!
-  # WARNING: no other Excel instances should be running. They could be killed without saving!
-
-  $book.Close()
-
-  $BookClosedOk  = ( [System.Runtime.Interopservices.Marshal]::ReleaseComObject( [System.__ComObject] $book )     -eq 0 )
-  $ExcelClosedOk = ( [System.Runtime.Interopservices.Marshal]::ReleaseComObject( [System.__ComObject] $instance ) -eq 0 )
-
-  if ( !( $BookClosedOk -and $ExcelClosedOk ) ) {
-    $ExcelProcess = Get-Process Excel
-    $ExcelProcess | ForEach-Object { Stop-Process ( $_.id ) }
-  }
-
-  [System.GC]::Collect()
-  [System.GC]::WaitForPendingFinalizers()
-}
-
-
-function NormalizeKeyName( [string] $KeyName ) {
-  $KeyName = $KeyName.Replace(" ", "_")
-  $KeyName = $KeyName.Replace("?", "")
-  $KeyName = $KeyName.Replace("/", "")
-
-  while ( $KeyName.SubString(0, 1) -eq "_" )                     { $KeyName = $KeyName.SubString( 1,  ( $KeyName.Length - 1 ) ) }
-  while ( $KeyName.SubString(($KeyName.Length - 1), 1) -eq "_" ) { $KeyName = $KeyName.SubString( 0,  ( $KeyName.Length - 1 ) ) }
-
-  $KeyName = $KeyName.Trim()
-
-  $KeyName
-}
-
-
-function Get-ExcelHeaders( $sheet ) {
-  # $CampaignInfoSchema = Get-ExcelHeaders -sheet $CampaignDataSource
 
   $header     = @{}
   $HeaderItem = ""
-  $column     = $FIRST_DATA_COLUMN
+  $column     = $DataStart[1]
+  $HeadersRow = $DataStart[0] - 1
 
-  do {
-    $HeaderItem = $sheet.Cells.Item( $HEADERS_ROW, $column ).Text
+  # $DebugPreference = "Continue"
+  if ( $DebugPreference -eq "Continue" ) { $DebugPreference = "SilentlyContinue" }
 
-    if ( $HeaderItem ) {
-      $HeaderItem = NormalizeKeyName $HeaderItem
+  Write-Debug "[Get-RawExcelHeaders] - Headers Row is: $HeadersRow"
 
-      $header.Add( $HeaderItem, $column )
-      $column++
-    }
-  } until ( !$HeaderItem )
+  if ( $sheet -ne $null ) {
+    do {
+      $HeaderItem = $sheet.Cells.Item( $HeadersRow, $column ).Value
 
-  $header
+      Write-Debug "[Get-RawExcelHeaders] - Discovered Column Name: $HeaderItem"
+
+      if ( $HeaderItem ) {
+        $HeaderItem = Get-RawNormalizedPropertyName $HeaderItem
+
+        $header.Add( $HeaderItem, $column )
+        $column++
+      }
+    } until ( !$HeaderItem )
+
+    $header
+  } else {
+    Write-Debug "[Get-RawExcelHeaders] - Can't discover Schema. Sheet Object is Null"
+
+    return @{}
+  }
+
+  # $DebugPreference = "SilentlyContinue"
+  if ( $DebugPreference -eq "SilentlyContinue" ) { $DebugPreference = "Continue" }
 }
 
 
-function Load-ExcelDataSet( $sheet, [HashTable] $schema ) {
-  # $campaign = Load-ExcelDataSet -sheet $CampaignDataSource -schema $CampaignInfoSchema
+function Import-RawExcelDataSet( $sheet, [HashTable] $schema, [int[]] $DataStart = @( $FIRST_DATA_ROW, $FIRST_DATA_COLUMN ), [int] $items = 0 ) {
+  <#
+    .SYNOPSIS
+      Loads data into PowerShell Objects from an Excel sheet taking into account its information schema.
 
-  [PSObject[]] $DataSet = @()
-  $FirstRow             = $FIRST_DATA_ROW
-  $LastRow              = ( Get-ExcelRowCount $sheet ) + $HEADERS_ROW
+    .DESCRIPTION
+      Loads data into PowerShell Objects from an Excel sheet taking into account its information schema.
+
+    .EXAMPLE
+      $campaign = Import-RawExcelDataSet -sheet $CampaignDataSource -schema $CampaignInfoSchema
+      $campaign = Import-RawExcelDataSet -sheet $CampaignDataSource -schema $CampaignInfoSchema -DataStart 4,2
+
+    .NOTES
+      Low-level function.
+
+    .LINK
+      N/A
+  #>
+
+
+  [System.Collections.ArrayList] $DataSet = @()
+
+  $FirstRow             = $DataStart[0]
+  $HeadersRow           = $DataStart[0] - 1
+
+  if ( $items -eq 0 ) {
+    $LastRow            = ( Get-RawExcelRowCount $sheet $DataStart ) + $HeadersRow
+  } else {
+    $LastRow            = $items + $HeadersRow
+  }
+
+  Write-Debug "[Import-RawExcelDataSet] - Headers Row is:   $HeadersRow"
+  Write-Debug "[Import-RawExcelDataSet] - First Column is:  $( $DataStart[1] ) "
+  Write-Debug "[Import-RawExcelDataSet] - First Row is:     $HeadersRow"
+  Write-Debug "[Import-RawExcelDataSet] - Last Row is:      $LastRow"
+  Write-Debug "[Import-RawExcelDataSet] - Items requested:  $items"
+
   $ExecutionTime        = [Diagnostics.Stopwatch]::StartNew()
-
+  $ExecutionTime.Stop()
 
   for ( $i = $FirstRow ; $i -le $LastRow ; $i++ ) {
-    $ExecutionTime.Stop()
-
     Write-Progress -Activity "Loading data ..." -Status "Progress: $i / $LastRow - ETC: $( '{0:###,##0.00}' -f (( $LastRow - $i ) *  $ExecutionTime.Elapsed.TotalMinutes) ) minutes - Time Elapsed: $( '{0:###,##0.00}' -f (( $i - 1 ) *  $ExecutionTime.Elapsed.TotalMinutes) ) minutes" -PercentComplete ( ( $i / $LastRow ) * 100 )
 
-    $ExecutionTime      = [Diagnostics.Stopwatch]::StartNew()
+    $ExecutionTime             = [Diagnostics.Stopwatch]::StartNew()
 
-
-    $ObjectProperties   = @{}
-
+    $ObjectProperties          = @{}
     $ObjectProperties.ObjectId = $i
 
     $schema.Keys | ForEach-Object {
-      $ObjectProperties.$_ =  $sheet.Cells.Item( $i, $schema.$_ ).Text
+      $ObjectProperties.$_     = $sheet.Cells.Item( $i, $schema.$_ ).Value
     }
 
-    $DataSet += New-Object PSObject -Property $ObjectProperties
+    $NewItem                   = New-Object PSObject -Property $ObjectProperties
+    $DataSet.Add( $NewItem ) | Out-Null
+
+    $ExecutionTime.Stop()
   }
 
-  $DataSet
+  $DataSet | ForEach-Object { if ( $_ -ne $null ) { $_ } }
 }
 
 
-function Save-ExcelDataSet( $DataSet, $sheet, [HashTable] $schema ) {
-  # Save-ExcelDataSet -DataSet $campaign -sheet $CampaignDataSource -schema $CampaignInfoSchema
+function Export-RawExcelDataSet( $DataSet, $sheet, [HashTable] $schema ) {
+  <#
+    .SYNOPSIS
+      Saves a PowerShell Dataset into a compatible Excel sheet taking into account both information schemas.
+
+    .DESCRIPTION
+      Saves a PowerShell Dataset into a compatible Excel sheet taking into account both information schemas.
+
+    .EXAMPLE
+      Export-RawExcelDataSet -DataSet $campaign -sheet $CampaignDataSource -schema $CampaignInfoSchema
+
+    .NOTES
+      Low-level function.
+
+    .LINK
+      N/A
+  #>
+
+
+  $ExecutionTime        = [Diagnostics.Stopwatch]::StartNew()
+  $ExecutionTime.Stop()
 
   $CurrentObjectCount   = 1
   $SourceSchema         = $DataSet[0] | Get-Member -MemberType NoteProperty | Select-Object Name
-  $ExecutionTime        = [Diagnostics.Stopwatch]::StartNew()
 
   foreach ( $object in $DataSet ) {
-    $ExecutionTime.Stop()
-
     Write-Progress -Activity "Saving data ..." -Status "Progress: $CurrentObjectCount / $( $DataSet.Count ) - ETC: $( '{0:###,##0.00}' -f (( $( $DataSet.Count ) - $CurrentObjectCount ) *  $ExecutionTime.Elapsed.TotalMinutes) ) minutes - Time Elapsed: $( '{0:###,##0.00}' -f (( $CurrentObjectCount - 1 ) *  $ExecutionTime.Elapsed.TotalMinutes) ) minutes" -PercentComplete ( ( $CurrentObjectCount / $( $DataSet.Count ) ) * 100 )
 
     $ExecutionTime      = [Diagnostics.Stopwatch]::StartNew()
 
-
     $SourceSchema | ForEach-Object {
       if ( $schema.ContainsKey( $( $_.Name ) ) ) {
-        $sheet.Cells.Item( $object.ObjectId, $schema.$($_.Name) ) = $object.$($_.Name)
+        $sheet.Cells.Item( $object.ObjectId, $schema.$($_.Name) ).Value = $object.$($_.Name)
       }
     }
 
     $CurrentObjectCount++
+
+    $ExecutionTime.Stop()
   }
 }
 
 
-function Get-ExcelRowCount( $sheet ) {
-	$range   = $sheet.UsedRange
-	$rows    = $range.Rows.Count
-	$rows    = $rows - $HEADERS_ROW
+function Get-RawExcelRowCount( $sheet, [int[]] $DataStart = @( $FIRST_DATA_ROW, $FIRST_DATA_COLUMN ) ) {
+  <#
+    .SYNOPSIS
+      Gets the number of rows for a given Excel sheet.
+
+    .DESCRIPTION
+      Gets the number of rows for a given Excel sheet.
+
+    .EXAMPLE
+      $rows = Get-RawExcelRowCount $sheet
+      $rows = Get-RawExcelRowCount $sheet -DataStart 4,2
+
+    .NOTES
+      Low-level function.
+
+    .LINK
+      N/A
+  #>
+
+  $LogFileName = "ExcelModule"
+
+  $HeadersRow  = $DataStart[0] - 1
+
+	try {
+    $LastRow   = $sheet.Dimension.End.Row - 1
+    $rows      = $LastRow - $HeadersRow
+  } catch {
+    "$(get-date -format u) [Get-RawExcelRowCount] - Can't retrieve number of rows" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+    Write-Debug "[Get-RawExcelRowCount] - Can't retrieve number of rows."
+
+    return 0
+  }
 
 	return $rows
 }
 
 
-function Get-ExcelColumnCount( $sheet ) {
-	$range   = $sheet.UsedRange
-	$columns = $range.Columns.Count
+function Get-RawExcelColumnCount( $sheet ) {
+  <#
+    .SYNOPSIS
+      Gets the number of columns for a given Excel sheet.
+
+    .DESCRIPTION
+      Gets the number of columns for a given Excel sheet.
+
+    .EXAMPLE
+      $rows = Get-RawExcelColumnCount $sheet
+
+    .NOTES
+      Low-level function.
+
+    .LINK
+      N/A
+  #>
+
+
+  $LogFileName  = "ExcelModule"
+
+  $StartColumn  = $DataStart[1]
+
+	try {
+    $LastColumn = $sheet.Dimension.End.Column - 1
+    $columns    = $LastColumn - $StartColumn
+  } catch {
+    "$(get-date -format u) [Get-RawExcelColumnCount] - Can't retrieve number of columns" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+    Write-Debug "[Get-RawExcelColumnCount] - Can't retrieve number of columns."
+
+    return 0
+  }
 
 	return $columns
 }
 
 
-function Get-ExcelSheetIdByName( $book, [string] $name ) {
-  # Get-ExcelSheetIdByName $book 'campaign'
+# --------------------------------------------------------------------------------------------------
 
-  $SheetId = -1
 
-  for ( $i = 1 ; $i -le $book.Worksheets.Count ; $i++ ) {
-    if ( $book.Worksheets.Item($i).Name -eq $name ) { $SheetId = $i }
+function Import-ExcelDataSet( [string] $file = "", [string] $sheet = "", [int[]] $DataStart = @( $FIRST_DATA_ROW, $FIRST_DATA_COLUMN ), [int] $items = 0 ) {
+  <#
+    .SYNOPSIS
+      Loads the Excel dataset contained on the especified sheet into a PowerShell dataset.
+
+    .DESCRIPTION
+      Loads the Excel dataset contained on the especified sheet into a PowerShell dataset.
+
+    .EXAMPLE
+      $CampaignDataSet = Import-ExcelDataSet -file .\campaign.xls -sheet "campaign"
+      $CampaignDataSet = Import-ExcelDataSet -file .\campaign.xls -sheet "campaign" -DataStart 4,2
+      $CampaignDataSet = Import-ExcelDataSet -file .\campaign.xls -sheet "campaign" -DataStart 4,2 -items 10
+
+    .NOTES
+      High-level function.
+
+    .LINK
+      N/A
+  #>
+
+
+  $LogFileName      = "ExcelModule"
+
+  $HeadersRow       = $DataStart[0] - 1
+
+
+  if ( $file -eq "" ) {
+    "$(get-date -format u) [Import-ExcelDataSet] - Aborting execution. File name hasn't been specified." >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+    Write-Debug "[Import-ExcelDataSet] - Aborting execution. File name hasn't been specified."
+
+    return $null
   }
 
-  $SheetId
+  if ( $sheet -eq "" ) {
+    "$(get-date -format u) [Import-ExcelDataSet] - Aborting execution. Sheet name hasn't been specified." >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+    Write-Debug "[Import-ExcelDataSet] - Aborting execution. Sheet name hasn't been specified."
+
+    return $null
+  }
+
+
+  if ( Test-Path $file ) {
+    $excel          = Open-RawExcelFile         -file $file
+
+    if ( $excel -ne $null ) {
+      Write-Debug "[Import-ExcelDataSet] - Opening Selected Excel Sheet"
+
+      if ( $excel.Workbook -ne $null ) {
+        try {
+          if ( $excel.Workbook.Worksheets.Count -ne 0 ) {
+            if ( $excel.Workbook.Worksheets[$sheet] -ne $null ) {
+
+              Write-Debug "[Import-ExcelDataSet] - Discovering Information Schema"
+
+              $DataSource   = $excel.Workbook.Worksheets[$sheet]
+              $InfoSchema   = Get-RawExcelHeaders       -sheet $DataSource -DataStart $DataStart
+
+              Write-Debug "[Import-ExcelDataSet] -   Sheet Inforation Schema Elements: $( $InfoSchema.Count )"
+
+              if ( $items -eq 0 ) {
+                $TotalItems = Get-RawExcelRowCount $DataSource $DataStart
+
+                Write-Debug "[Import-ExcelDataSet] - Reading all the content in the Sheet."
+                Write-Debug "[Import-ExcelDataSet] -   TotalItems: $TotalItems"
+
+                $DataSet    = Import-RawExcelDataSet    -sheet $DataSource -schema $InfoSchema -DataStart $DataStart -items $TotalItems
+              } else {
+                Write-Debug "[Import-ExcelDataSet] - Reading only partial content of the Sheet."
+                Write-Debug "[Import-ExcelDataSet] -   TotalItems: $items"
+
+                $DataSet    = Import-RawExcelDataSet    -sheet $DataSource -schema $InfoSchema -DataStart $DataStart -items $items
+              }
+
+              $excel.Dispose()
+
+              $DataSet
+            } else {
+              "$(get-date -format u) [Import-ExcelDataSet] - Can't open the specified sheet. Sheet Name incorrect." >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+              "$(get-date -format u) [Import-ExcelDataSet] -   Sheet Name: $name"                                   >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+              Write-Debug "[Import-ExcelDataSet] - Can't open the specified sheet. Sheet Name incorrect."
+              Write-Debug "[Import-ExcelDataSet] -   Sheet Name: $name"
+
+              return $null
+            }
+          } else {
+            "$(get-date -format u) [Import-ExcelDataSet] - Can't open the specified sheet. Worksheets are null." >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+            "$(get-date -format u) [Import-ExcelDataSet] -   Sheet Name: $name"                                  >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+            Write-Debug "[Import-ExcelDataSet] - Can't open the specified sheet. Worksheets are null."
+            Write-Debug "[Import-ExcelDataSet] -   Sheet Name: $name"
+
+            return $null
+          }
+        } catch {
+          "$(get-date -format u) [Import-ExcelDataSet] - Can't open the specified sheet. Unexpected Error." >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+          "$(get-date -format u) [Import-ExcelDataSet] -   Sheet Name: $name"                               >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+          Write-Debug "[Import-ExcelDataSet] - Can't open the specified sheet. Unexpected Error."
+          Write-Debug "[Import-ExcelDataSet] -   Sheet Name: $name"
+
+          return $null
+        }
+      } else {
+        "$(get-date -format u) [Import-ExcelDataSet] - Can't open the specified sheet. Workbook is null." >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+        "$(get-date -format u) [Import-ExcelDataSet] -   Sheet Name: $sheet"                              >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+        Write-Debug "[Import-ExcelDataSet] - Can't open the specified sheet. Workbook is null."
+        Write-Debug "[Import-ExcelDataSet] -   Sheet Name: $sheet"
+
+        return $null
+      }
+    } else {
+      "$(get-date -format u) [Import-ExcelDataSet] - Unable to open excel file." >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+      "$(get-date -format u) [Import-ExcelDataSet] -   File Name: $file"         >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+      Write-Debug "[Import-ExcelDataSet] - Unable to open excel file."
+      Write-Debug "[Import-ExcelDataSet] -   File Name: $file"
+
+      return $null
+    }
+  } else {
+    "$(get-date -format u) [Import-ExcelDataSet] - File doesn't exists" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+    "$(get-date -format u) [Import-ExcelDataSet] -   File Name: $file"  >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+    Write-Debug "[Import-ExcelDataSet] - File doesn't exists."
+    Write-Debug "[Import-ExcelDataSet] -   File Name: $file"
+
+    return $null
+  }
 }
 
 
-function Get-ExcelSheet( $book, [int] $id ) {
-  # $CampaignData = Get-ExcelSheet $book $CampaignSheetId
+function Export-ExcelDataSet( [PSObject[]] $data, [string] $file = "", [string] $sheet = "", [int[]] $DataStart = @( $FIRST_DATA_ROW, $FIRST_DATA_COLUMN ), [int] $items = 0  ) {
+  <#
+    .SYNOPSIS
+      Saves an existing PowerShell dataset into the especified Excel sheet.
 
-  $book.Worksheets.Item( $id )
+    .DESCRIPTION
+      Saves an existing PowerShell dataset into the especified Excel sheet. For this operation to succeed,
+      both elements, the source dataset and the excel sheet, must have the same structure.
+
+    .EXAMPLE
+      Export-ExcelDataSet $UpdatedCampaignDataSet -file .\campaign.xls -sheet "campaign"
+      Export-ExcelDataSet $UpdatedCampaignDataSet -file .\campaign.xls -sheet "campaign" -DataStart 4,2
+      Export-ExcelDataSet $UpdatedCampaignDataSet -file .\campaign.xls -sheet "campaign" -DataStart 4,2 -items 10
+
+    .NOTES
+      High-level function.
+
+    .LINK
+      N/A
+  #>
+
+
+  $LogFileName  = "ExcelModule"
+
+  $HeadersRow       = $DataStart[0] - 1
+
+
+  if ( $data -eq $null ) {
+    "$(get-date -format u) [Export-ExcelDataSet] - Aborting execution. Input data hasn't been specified." >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+    Write-Debug "[Export-ExcelDataSet] - Aborting execution. Input data hasn't been specified."
+
+    return $null
+  }
+
+  if ( $file -eq "" ) {
+    "$(get-date -format u) [Export-ExcelDataSet] - Aborting execution. File name hasn't been specified." >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+    Write-Debug "[Export-ExcelDataSet] - Aborting execution. File name hasn't been specified."
+
+    return $null
+  }
+
+  if ( $sheet -eq "" ) {
+    "$(get-date -format u) [Export-ExcelDataSet] - Aborting execution. Sheet name hasn't been specified." >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+    Write-Debug "[Export-ExcelDataSet] - Aborting execution. Sheet name hasn't been specified."
+
+    return $null
+  }
+
+
+  if ( Test-Path $file ) {
+    $excel          = Open-RawExcelFile         -file $file
+
+    if ( $excel -ne $null ) {
+      Write-Debug "[Export-ExcelDataSet] - Opening Selected Excel Sheet"
+
+      if ( $excel.Workbook -ne $null ) {
+        try {
+          if ( $excel.Workbook.Worksheets.Count -ne 0 ) {
+            if ( $excel.Workbook.Worksheets[$sheet] -ne $null ) {
+
+              Write-Debug "[Export-ExcelDataSet] - Discovering Information Schema"
+
+              $DataSource   = $excel.Workbook.Worksheets[$sheet]
+              $InfoSchema   = Get-RawExcelHeaders       -sheet $DataSource -DataStart $DataStart
+
+              Write-Debug "[Export-ExcelDataSet] -   Sheet Inforation Schema Elements: $( $InfoSchema.Count )"
+
+              if ( $items -eq 0 ) {
+                Write-Debug "[Export-ExcelDataSet] - Saving all the content in the source Dataset."
+                Write-Debug "[Export-ExcelDataSet] -   TotalItems: $( $data.Count )"
+
+                Export-RawExcelDataSet    -DataSet $data -sheet $DataSource -schema $InfoSchema
+              } else {
+                if ( $items -lt $data.Count ) {
+                  Write-Debug "[Export-ExcelDataSet] - Saving only partial content of the source Dataset."
+                  Write-Debug "[Export-ExcelDataSet] -   TotalItems: $items"
+
+                  Export-RawExcelDataSet    -DataSet $data[0..$items] -sheet $DataSource -schema $InfoSchema
+                } else {
+                  Write-Debug "[Export-ExcelDataSet] - Saving all the content in the source Dataset."
+                  Write-Debug "[Export-ExcelDataSet] -   TotalItems: $( $data.Count )"
+
+                  Export-RawExcelDataSet    -DataSet $data -sheet $DataSource -schema $InfoSchema
+                }
+              }
+
+              try {
+                $excel.Save()
+              } catch {
+                "$(get-date -format u) [Export-ExcelDataSet] - Can't save Excel file. Unexpected error." >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+                "$(get-date -format u) [Export-ExcelDataSet] -   Error: $( $Error[0].Exception )"        >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+                Write-Debug "[Export-ExcelDataSet] - Can't save Excel file. Unexpected error."
+                Write-Debug "[Export-ExcelDataSet] -   Error: $( $Error[0].Exception )"
+              }
+
+              $excel.Dispose()
+            } else {
+              "$(get-date -format u) [Export-ExcelDataSet] - Can't open the specified sheet. Sheet Name incorrect." >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+              "$(get-date -format u) [Export-ExcelDataSet] -   Sheet Name: $name"                                   >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+              Write-Debug "[Export-ExcelDataSet] - Can't open the specified sheet. Sheet Name incorrect."
+              Write-Debug "[Export-ExcelDataSet] -   Sheet Name: $name"
+
+              return $null
+            }
+          } else {
+            "$(get-date -format u) [Export-ExcelDataSet] - Can't open the specified sheet. Worksheets are null." >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+            "$(get-date -format u) [Export-ExcelDataSet] -   Sheet Name: $name"                                  >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+            Write-Debug "[Export-ExcelDataSet] - Can't open the specified sheet. Worksheets are null."
+            Write-Debug "[Export-ExcelDataSet] -   Sheet Name: $name"
+
+            return $null
+          }
+        } catch {
+          "$(get-date -format u) [Export-ExcelDataSet] - Can't open the specified sheet. Unexpected Error." >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+          "$(get-date -format u) [Export-ExcelDataSet] -   Sheet Name: $name"                               >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+          Write-Debug "[Export-ExcelDataSet] - Can't open the specified sheet. Unexpected Error."
+          Write-Debug "[Export-ExcelDataSet] -   Sheet Name: $name"
+
+          return $null
+        }
+      } else {
+        "$(get-date -format u) [Export-ExcelDataSet] - Can't open the specified sheet. Workbook is null." >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+        "$(get-date -format u) [Export-ExcelDataSet] -   Sheet Name: $sheet"                              >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+        Write-Debug "[Export-ExcelDataSet] - Can't open the specified sheet. Workbook is null."
+        Write-Debug "[Export-ExcelDataSet] -   Sheet Name: $sheet"
+
+        return $null
+      }
+    } else {
+      "$(get-date -format u) [Export-ExcelDataSet] - Unable to open excel file." >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+      "$(get-date -format u) [Export-ExcelDataSet] -   File Name: $file"         >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+      Write-Debug "[Export-ExcelDataSet] - Unable to open excel file."
+      Write-Debug "[Export-ExcelDataSet] -   File Name: $file"
+
+      return $null
+    }
+  } else {
+    "$(get-date -format u) [Export-ExcelDataSet] - File doesn't exists" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+    "$(get-date -format u) [Export-ExcelDataSet] -   File Name: $file"  >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+    Write-Debug "[Export-ExcelDataSet] - File doesn't exists."
+    Write-Debug "[Export-ExcelDataSet] -   File Name: $file"
+
+    return $null
+  }
 }

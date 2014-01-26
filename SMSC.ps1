@@ -2,8 +2,8 @@
 -------------------------------------------------------------------------------
 Name:    Social Media Scripting Framework
 Module:  Social Media Scripting Console
-Version: 0.2 BETA
-Date:    2013/02/03
+Version: 0.5 BETA
+Date:    2014/01/20
 Author:  Carlos Veira Lorenzo
          e-mail:   cveira [at] thinkinbig [dot] org
          blog:     thinkinbig.org
@@ -57,71 +57,43 @@ $COLOR_ENPHASIZE            = 'Magenta'
 $ConsoleHeader = @"
   Social Media Scripting Console
   Carlos Veira Lorenzo - [http://thinkinbig.org]
-  -------------------------------------------------------------------------------------------
-  Social Media Scripting Framework v0.2b, Copyright (C) 2013 Carlos Veira Lorenzo.
-  This software come with ABSOLUTELY NO WARRANTY. This is free
-  software under GPL 2.0 license terms and conditions.
-  -------------------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------------------
+  Social Media Scripting Framework v0.5b BETA
+  Copyright (C) 2014 Carlos Veira Lorenzo.
+  This software come with ABSOLUTELY NO WARRANTY. This is free software under a GPL 2.0 license.
+  ----------------------------------------------------------------------------------------------
 "@
 
 Write-Host
 Write-Host -foregroundcolor $COLOR_BRIGHT $ConsoleHeader
 Write-Host
 
+$InstallDir                 = Split-Path -parent $MyInvocation.MyCommand.Definition
+$BinDir                     = $InstallDir  + "\bin"
+$LogsDir                    = $InstallDir  + "\logs"
+$ProfilesDir                = $InstallDir  + "\profiles"
+$MasterProfileDir           = $ProfilesDir + "\master"
 
-$InstallDir                 = $( Get-ChildItem $MyInvocation.InvocationName | Select-Object Directory |
-                                 Format-Table -AutoSize -HideTableHeaders | Out-String ).Trim()
+Write-Host -foregroundcolor $COLOR_NORMAL -noNewLine "  + Loading Core Components... "
 
-if ( $InstallDir.Split(":").Length -gt 2 ) {
-  $InstallDir               = $( Get-Location | Select-Object Path |
-                                 Format-Table -AutoSize -HideTableHeaders | Out-String ).Trim()
-}
+. $InstallDir\CoreDataStructures.ps1
+. $InstallDir\CoreModule.ps1
+. $InstallDir\HelperModule.ps1
 
+( Get-ChildItem $InstallDir\PS*.ps1 ).Name | ForEach-Object { . $InstallDir\$_ }
 
-if ( Test-Path $InstallDir\SMSF.psm1 ) {
-  Write-Host -foregroundcolor $COLOR_NORMAL -noNewLine "  + Loading Social Media commands and functions... "
+Write-Host -foregroundcolor $COLOR_BRIGHT "done"
 
-  . $InstallDir\SMSF-security.ps1
-  . $InstallDir\SMSF-settings.ps1
+Write-Host -foregroundcolor $COLOR_NORMAL -noNewLine "  + Loading Core Settings... "
 
-  . $InstallDir\SMSF-functions.ps1
+. $InstallDir\settings.ps1
 
-  . $InstallDir\PSBrowsingModule.ps1
-
-  . $InstallDir\PSTwitterModule.ps1
-  . $InstallDir\PSFacebookModule.ps1
-  . $InstallDir\PSLinkedInModule.ps1
-  . $InstallDir\PSBitLyModule.ps1
-
-  . $InstallDir\PSDataSetModule.ps1
-  . $InstallDir\PSExcelModule.ps1
-
-  # Import-Module $InstallDir\SMSF.psm1 -DisableNameChecking -force
-
-  Write-Host -foregroundcolor $COLOR_BRIGHT "done"
+Write-Host -foregroundcolor $COLOR_BRIGHT "done"
 
 
-  Write-Host -foregroundcolor $COLOR_NORMAL -noNewLine "  + Checking environment configuration... "
-
-  Test-SMSFSettings
-
-  Write-Host -foregroundcolor $COLOR_BRIGHT "done"
-
-  Write-Host -foregroundcolor $COLOR_NORMAL -noNewLine "  + Connecting to Social Networks... "
-
-  $FBConnection = New-FBConnection -AccessToken $FBAccessToken
-
-  Write-Host -foregroundcolor $COLOR_BRIGHT "done"
-} else {
-  Write-Host -foregroundcolor $COLOR_ERROR  "  + ERROR: can't find/load module's files:             $InstallDir"
-  Write-Host -foregroundcolor $COLOR_NORMAL "    + INFO: you will be left on a regular PowerShell Session..."
-}
-
+. Set-SMProfile -name $DefaultProfileName
 
 Write-Host
-Write-Host -foregroundcolor $COLOR_BRIGHT '  -------------------------------------------------------------------------------------------'
-Write-Host
-
 
 $OriginalPrompt = Get-Content function:prompt
 

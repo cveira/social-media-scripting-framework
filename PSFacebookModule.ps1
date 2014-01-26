@@ -2,8 +2,8 @@
 -------------------------------------------------------------------------------
 Name:    Social Media Scripting Framework
 Module:  Facebook
-Version: 0.2 BETA
-Date:    2013/02/03
+Version: 0.5 BETA
+Date:    2014/01/20
 Author:  Carlos Veira Lorenzo
          e-mail:   cveira [at] thinkinbig [dot] org
          blog:     thinkinbig.org
@@ -46,49 +46,58 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #>
 
 
-function Get-FBPostById( [string] $PostId, [ref] $TimeLine ) {
-  # Get-FBPostById <Facebook-Post-Id> ([ref] $TimeLine)
+function Get-RawFBPostAudienceFromPage( [ref] $PageSourceCode ) {
+  <#
+    .SYNOPSIS
+      Parses the raw HTML contents of a web-based Facebook post to get the audience information.
 
-  foreach ( $post in $TimeLine.Value ) {
-    if ( $PostId -eq $post.id.Split("_")[1] ) {
-      $post
-      break
-    }
-  }
-}
+    .DESCRIPTION
+      Parses the raw HTML contents of a web-based Facebook post to get the audience information.
 
+    .EXAMPLE
+      $SourceCode = Get-PageSourceCodeFromIE <Facebook-Post-PermaLink>
+      Get-RawFBPostAudienceFromPage ([ref] $SourceCode)
 
-function Get-FBPostByPermaLink( [string] $PermaLink, [ref] $TimeLine ) {
-  # Get-FBPostByPermaLink <Facebook-Post-PermaLink> ([ref] $TimeLine)
+    .NOTES
+      Low-level function. Depends on Get-PageSourceCodeFromIE in order leverage existing session cookies.
 
-  foreach ( $post in $TimeLine.Value ) {
-    if ( $PermaLink -eq $post.Link ) {
-      $post
-      break
-    }
-  }
-}
+    .LINK
+      N/A
+  #>
 
 
-function Get-FBPostAudienceFromPage( [ref] $PageSourceCode ) {
-  # $SourceCode = Get-PageSourceCodeFromIE <Facebook-Post-PermaLink>
-  # Get-FBPostAudienceFromPage ([ref] $SourceCode)
-
-  [string] $AudiencePattern = '<a href="#">(?<AudienceCount>.*?) people saw this post</a>'
+  # [string] $AudiencePattern = '<a href="#">(?<AudienceCount>.*?) people saw this post</a>'
+  [string] $AudiencePattern = '<span class="pas fcb">(?<AudienceCount>.*?) people saw this post</span>'
 
   $AudienceFound            = 0
 
   if ( $PageSourceCode.Value -match $AudiencePattern ) {
-    $AudienceFound = [int] $Matches.AudienceCount.Trim()
+    $AudienceFound          = [int] $Matches.AudienceCount.Trim()
   }
 
   $AudienceFound
 }
 
 
-function Get-FBPostLikesFromPage( [ref] $PageSourceCode ) {
-  # $SourceCode = Get-PageSourceCodeFromIE <Facebook-Post-PermaLink>
-  # Get-FBPostLikesFromPage ([ref] $SourceCode)
+function Get-RawFBPostLikesFromPage( [ref] $PageSourceCode ) {
+  <#
+    .SYNOPSIS
+      Parses the raw HTML contents of a web-based Facebook post to get the number of likes.
+
+    .DESCRIPTION
+      Parses the raw HTML contents of a web-based Facebook post to get the number of likes.
+
+    .EXAMPLE
+      $SourceCode = Get-PageSourceCodeFromIE <Facebook-Post-PermaLink>
+      Get-RawFBPostLikesFromPage ([ref] $SourceCode)
+
+    .NOTES
+      Low-level function. Depends on Get-PageSourceCodeFromIE in order leverage existing session cookies.
+
+    .LINK
+      N/A
+  #>
+
 
   # [string] $LikesPattern = '"text":"(?<LikesCount>.*?) people like this."'
   [string] $LikesPattern = '"likecount":(?<LikesCount>.*?),'
@@ -96,349 +105,572 @@ function Get-FBPostLikesFromPage( [ref] $PageSourceCode ) {
   $LikesFound            = 0
 
   if ( $PageSourceCode.Value -match $LikesPattern ) {
-    $LikesFound = [int] $Matches.LikesCount.Trim()
+    $LikesFound          = [int] $Matches.LikesCount.Trim()
   }
 
   $LikesFound
 }
 
 
-function Get-FBPostCommentsFromPage( [ref] $PageSourceCode ) {
-  # $SourceCode = Get-PageSourceCodeFromIE <Facebook-Post-PermaLink>
-  # Get-FBPostCommentsFromPage ([ref] $SourceCode)
+function Get-RawFBPostCommentsFromPage( [ref] $PageSourceCode ) {
+  <#
+    .SYNOPSIS
+      Parses the raw HTML contents of a web-based Facebook post to get the number of comments.
+
+    .DESCRIPTION
+      Parses the raw HTML contents of a web-based Facebook post to get the number of comments.
+
+    .EXAMPLE
+      $SourceCode = Get-PageSourceCodeFromIE <Facebook-Post-PermaLink>
+      Get-RawFBPostCommentsFromPage ([ref] $SourceCode)
+
+    .NOTES
+      Low-level function. Depends on Get-PageSourceCodeFromIE in order leverage existing session cookies.
+
+    .LINK
+      N/A
+  #>
+
 
   [string] $CommentsPattern = '"commentcount":(?<CommentsCount>.*?),'
 
   $CommentsFound            = 0
 
   if ( $PageSourceCode.Value -match $CommentsPattern ) {
-    $CommentsFound = [int] $Matches.CommentsCount.Trim()
+    $CommentsFound          = [int] $Matches.CommentsCount.Trim()
   }
 
   $CommentsFound
 }
 
-# --------------------------------------------------------------------------------------------------
 
+function Search-RawFBPost( [string] $text, [ref] $on, [string] $by = "digest" ) {
+  <#
+    .SYNOPSIS
+      Retrieves the first post in the Time Line that matches the provided text.
 
-function Get-FBTimeLine( $connection ) {
-  Get-FBPost -Connection $connection
-}
+    .DESCRIPTION
+      Retrieves the first post in the Time Line that matches the provided text. Search is performed over key post properties only like Digest or PermaLink.
 
+    .EXAMPLE
+      $PostFromFacebook = Search-RawFBPost -text $post.NormalizedPost.PermaLink -on ([ref] $TimeLine) -by permalink
+      $PostFromFacebook = Search-RawFBPost -text $post.NormalizedPost.PermaLink -on ([ref] $TimeLine) -by digest
 
-function Analyze-FBPosts() {
-  # Requires a normalized TimeLine
-  # $TimeLine | Analyze-FBPosts | format-table -autoSize
+    .NOTES
+      Low-level function. TimeLine is not normalized (is in Raw format)
 
-  begin {
-    [PSObject[]] $BasicMetrics = @()
-  }
+    .LINK
+      N/A
+  #>
 
-  process {
-    $post           = $_
 
-    $BasicMetrics  += New-Object PSObject -Property @{
-      PostId        = $post.PostId
-      CommentsCount = $post.comments_count
-      LikesCount    = $post.likes_count
-      SharesCount   = $post.shares_count
-      AudienceCount = $post.audience_count
-    }
-  }
+  $post = $null
 
-  end {
-    $BasicMetrics
-  }
-}
+  switch ( $by.ToLower() ) {
+    "permalink" {
+      $on.Value | ForEach-Object {
+        if ( $_.link -match "photo.php" ) {
+          if ( $text -eq $_.link ) {
+            $post = $_
 
-
-function Analyze-FBTimeLine() {
-  # Requires a normalized TimeLine
-  # $TimeLine | Analyze-FBTimeLine | format-table -autoSize
-
-  begin {
-    [PSObject[]] $EngagementMetrics = @()
-
-    $TotalComments = 0
-    $TotalLikes    = 0
-    $TotalShares   = 0
-    $TotalAudience = 0
-  }
-
-  process {
-    $post           = $_
-
-    $TotalComments += $post.comments_count
-    $TotalLikes    += $post.likes_count
-    $TotalShares   += $post.shares_count
-    $TotalAudience += $post.audience_count
-  }
-
-  end {
-    New-Object PSObject -Property @{
-      TotalComments = $TotalComments
-      TotalLikes    = $TotalLikes
-      TotalShares   = $TotalShares
-      TotalAudience = $TotalAudience
-    }
-  }
-}
-
-
-function Get-FBTimeLineProspects() {
-  # $TimeLine | Get-FBTimeLineProspects | format-table -autoSize
-
-  begin {
-    [PSObject[]] $Prospects = @()
-  }
-
-  process {
-    $post         = $_
-
-    $post.likes | ForEach-Object {
-      $Prospects += New-Object PSObject -Property @{
-        Name = $_.name
-      }
-    }
-
-    $post.comments | ForEach-Object {
-      $Prospects += New-Object PSObject -Property @{
-        Name = $_.from.name
-      }
-    }
-  }
-
-  end {
-    $Prospects | Select-Object Name -unique | Sort-Object Name
-  }
-}
-
-
-function Analyze-FBTimeLineProspects() {
-  # $TimeLine | Analyze-FBTimeLineProspects | format-table -autoSize
-
-  begin {
-    $ProspectsStats = @{}
-  }
-
-  process {
-    $post = $_
-
-    foreach ( $LikeInfo in $post.likes ) {
-      if ( $LikeInfo.Name -ne $null ) {
-        if ( $ProspectsStats.ContainsKey( $LikeInfo.Name ) ) {
-          $ProspectsStats.$($LikeInfo.Name).Likes += 1
-        } else {
-          $ProspectsStats.Add( $LikeInfo.Name, @{ Likes = 1; Comments = 0 } )
-        }
-      }
-    }
-
-    foreach ( $CommentInfo in $post.comments ) {
-      if ( $CommentInfo.from.name -ne $null ) {
-        if ( $ProspectsStats.ContainsKey( $CommentInfo.from.name ) ) {
-          $ProspectsStats.$($CommentInfo.from.name).Comments += 1
-        } else {
-          $ProspectsStats.Add( $CommentInfo.from.name, @{ Likes = 0; Comments = 1 } )
-        }
-      }
-    }
-  }
-
-  end {
-    [PSObject[]] $Prospects = @()
-
-    $ProspectsStats.Keys | ForEach-Object {
-      $Prospects += New-Object PSObject -Property @{
-        Name     = $_
-        Likes    = $ProspectsStats["$_"].Likes
-        Comments = $ProspectsStats["$_"].Comments
-      }
-    }
-
-    $Prospects
-  }
-}
-
-
-function Normalize-FBTimeLine( [PSObject[]] $TimeLine, [switch] $IncludeAll ) {
-  # $TimeLine = Normalize-FBTimeLine $FBPosts -IncludeAll
-
-  # $DebugPreference = "Continue"
-
-  [PSObject[]] $NewTimeLine = @()
-  $TimeToWait               = 5
-  $i                        = 1
-
-
-  $TimeLine | ForEach-Object {
-    $NewPost                = $_
-
-    if ( $IncludeAll ) {
-      Write-Progress -Activity "Normalizing Information ..." -Status "Progress: $i / $($TimeLine.Count) - ETC: $( (( $TimeLine.Count - $i ) * $TimeToWait ) / 60 ) minutes - Time Elapsed: $( (( $i - 1 ) * $TimeToWait ) / 60 ) minutes" -PercentComplete ( ( $i / $TimeLine.Count ) * 100 )
-    } else {
-      Write-Progress -Activity "Normalizing Information ..." -Status "Progress: $i / $($TimeLine.Count)" -PercentComplete ( ( $i / $TimeLine.Count ) * 100 )
-    }
-
-    Write-Debug ".user not exists:           $( $NewTweet.user -eq $null )"
-
-    if ( $NewPost.user -eq $null ) {
-      $NewPost | Add-Member -NotePropertyName user           -NotePropertyValue "$($NewPost.from.name)"
-    } else {
-      $NewPost.user = $NewPost.from.name
-    }
-
-    Write-Debug ".PostPermaLink not exists:  $( $NewTweet.PostPermaLink -eq $null )"
-
-    if ( $NewPost.PostPermaLink -eq $null ) {
-      if ( $NewPost.link -match "photo.php" ) {
-        $NewPost | Add-Member -NotePropertyName PostPermaLink  -NotePropertyValue "$($NewPost.link)"
-      } else {
-        $NewPost | Add-Member -NotePropertyName PostPermaLink  -NotePropertyValue "$($NewPost.actions[0].link)"
-      }
-    } else {
-      if ( $NewPost.link -match "photo.php" ) {
-        $NewPost.PostPermaLink = $NewPost.link
-      } else {
-        $NewPost.PostPermaLink = $NewPost.actions[0].link
-      }
-    }
-
-    Write-Debug ".PostPrivacy not exists:    $( $NewTweet.PostPrivacy -eq $null )"
-
-    if ( $NewPost.PostPrivacy -eq $null ) {
-      $NewPost | Add-Member -NotePropertyName PostPrivacy    -NotePropertyValue "$($NewPost.privacy.description)"
-    } else {
-      $NewPost.PostPrivacy   = $NewPost.privacy.description
-    }
-
-
-    $SourceCode              = Get-PageSourceCodeFromIE $NewPost.PostPermaLink
-
-
-    Write-Debug ".likes_count not exists:    $( $NewTweet.likes_count -eq $null )"
-
-    if ( $NewPost.likes_count -eq $null ) {
-      $NewPost | Add-Member -NotePropertyName likes_count    -NotePropertyValue $( Get-FBPostLikesFromPage    ([ref] $SourceCode) )
-    } else {
-      $NewPost.likes_count   = $( Get-FBPostLikesFromPage    ([ref] $SourceCode) )
-    }
-
-    Write-Debug ".comments_count not exists: $( $NewTweet.comments_count -eq $null )"
-
-    if ( $NewPost.comments_count -eq $null ) {
-      $NewPost | Add-Member -NotePropertyName comments_count -NotePropertyValue $( Get-FBPostCommentsFromPage ([ref] $SourceCode) )
-    } else {
-      $NewPost.comments_count = $( Get-FBPostCommentsFromPage ([ref] $SourceCode) )
-    }
-
-    Write-Debug ".shares_count not exists:   $( $NewTweet.shares_count -eq $null )"
-
-    if ( $NewPost.shares.count -eq $null ) {
-      if ( $NewPost.shares_count -eq $null ) {
-        $NewPost | Add-Member -NotePropertyName shares_count -NotePropertyValue 0
-      } else {
-        $NewPost.shares_count = 0
-      }
-    } else {
-      if ( $NewPost.shares_count -eq $null ) {
-        $NewPost | Add-Member -NotePropertyName shares_count -NotePropertyValue $($NewPost.shares.count)
-      } else {
-        if ( $NewPost.shares_count -lt $NewPost.shares.count ) {
-          $NewPost.shares_count = $NewPost.shares.count
-        }
-      }
-    }
-
-    Write-Debug "[INFO] user:                $($NewPost.user)"
-    Write-Debug "[INFO] PostPermaLink:       $($NewPost.PostPermaLink)"
-    Write-Debug "[INFO] PostPrivacy:         $($NewPost.PostPrivacy)"
-    Write-Debug "[INFO] likes_count:         $($NewPost.likes_count)"
-    Write-Debug "[INFO] comments_count:      $($NewPost.comments_count)"
-    Write-Debug "[INFO] shares_count:        $($NewPost.shares_count)"
-    Write-Debug "[INFO] shares.count:        $($NewPost.shares.count)"
-
-    if ( $IncludeAll ) {
-      if ( $IncludeAll ) {
-        Write-Progress -Activity "Retrieving Audience ..." -Status "Progress: $i / $($TimeLine.Count) - ETC: $( (( $TimeLine.Count - $i ) * $TimeToWait ) / 60 ) minutes - Time Elapsed: $( (( $i - 1 ) * $TimeToWait ) / 60 ) minutes" -PercentComplete ( ( $i / $TimeLine.Count ) * 100 )
-      } else {
-        Write-Progress -Activity "Retrieving Audience ..." -Status "Progress: $i / $($TimeLine.Count)" -PercentComplete ( ( $i / $TimeLine.Count ) * 100 )
-      }
-
-      Write-Debug ".audience_count not exists: $( $NewTweet.audience_count -eq $null )"
-
-      if ( $NewPost.audience_count -eq $null ) {
-        $NewPost | Add-Member -NotePropertyName audience_count -NotePropertyValue $( Get-FBPostAudienceFromPage ([ref] $SourceCode) )
-      } else {
-        $NewPost.audience_count = $( Get-FBPostAudienceFromPage ([ref] $SourceCode) )
-      }
-
-      Write-Debug "[INFO] audience_count:      $($NewPost.audience_count)"
-    }
-
-    Start-Sleep -Seconds $TimeToWait
-
-    $NewTimeLine += $NewPost
-    $i++
-  }
-
-  # $DebugPreference = "SilentlyContinue"
-
-  $NewTimeLine
-}
-
-
-function Rebuild-FBTimeLine( [PSObject[]] $from ) {
-  [PSObject[]] $TimeLine = @()
-  $TimeToWait            = 6
-  $i                     = 1
-
-  Write-Host -foregroundcolor $COLOR_BRIGHT "     INFO: Retrieving page Time Line"
-  $FBPosts               = Get-FBTimeLine -connection $FBPageConnection
-
-  Write-Host -foregroundcolor $COLOR_BRIGHT "     INFO: Retrieving page Photos"
-  $FBPhotos              = Get-FBPhoto -AllAlbums -connection $FBPageConnection
-
-  $from | ForEach-Object {
-    if ( $SourceSchema.count -eq 0 ) {
-      $SourceSchema      = $_ | Get-Member -MemberType NoteProperty | ForEach-Object { $_.Name }
-      $PropertyName      = GetMatchesInCollection "PermaLink" $SourceSchema
-    }
-
-    if ( $_.$PropertyName -match "facebook.com" ) {
-      $PostFound   = $false
-
-      if ( $_.$PropertyName -match "photo.php" ) {
-        for ( $i = 0; $i -lt $FBPhotos.Length; $i++ ) {
-          if ( $_.$PropertyName -eq $FBPhotos[$i].link ) {
-            $TimeLine   += $FBPhotos[$i]
-            $PostFound   = $true
-
-            if ( $i -eq 0 )                                                  { $FBPhotos = $FBPhotos[1..($FBPhotos.Length)]     }
-            elseif ( $i -eq ( $FBPhotos.Length - 1 ) )                       { $FBPhotos = $FBPhotos[0..($FBPhotos.Length - 2)] }
-            elseif ( ( $i -gt 0 ) -and ( $i -ne ( $FBPhotos.Length - 1 ) ) ) { $FBPhotos = $FBPhotos[0..($i - 1) + ($i + 1)..($FBPhotos.Length - 1)] }
+            break
           }
-        }
-      } else {
-        for ( $i = 0; $i -lt $FBPosts.Length; $i++ ) {
-          if ( $_.$PropertyName.Split("/")[($_.$PropertyName.Split("/").Length - 1)] -eq $FBPosts[$i].id.Split("_")[1] ) {
-            $TimeLine   += $FBPosts[$i]
-            $PostFound   = $true
+        } else {
+          if ( $text -eq $_.actions[0].link ) {
+            $post = $_
 
-            if ( $i -eq 0 )                                                 { $FBPosts = $FBPosts[1..($FBPosts.Length)]     }
-            elseif ( $i -eq ( $FBPosts.Length - 1 ) )                       { $FBPosts = $FBPosts[0..($FBPosts.Length - 2)] }
-            elseif ( ( $i -gt 0 ) -and ( $i -ne ( $FBPosts.Length - 1 ) ) ) { $FBPosts = $FBPosts[0..($i - 1) + ($i + 1)..($FBPosts.Length - 1)] }
+            break
           }
         }
       }
-
-      if ( !$PostFound ) {
-        Write-Host -foregroundcolor $COLOR_BRIGHT "     INFO: unable to find post:        $($_.$PropertyName)"
-      }
-    } else {
-      Write-Host -foregroundcolor $COLOR_NORMAL$ "     INFO: Skipping non-Facebook post: $($_.$PropertyName)"
     }
+
+    default {
+      $on.Value | ForEach-Object {
+        if ( $text -eq $( Get-SMPostDigest $_.message ) ) {
+          $post = $_
+
+          break
+        }
+      }
+    }
+  }
+
+  $post
+}
+
+
+function Get-RawFBTimeLine( $connection = $connections.Facebook.connection ) {
+  <#
+    .SYNOPSIS
+      Retrieves the raw Facebook Time Line either from the local cache or from Facebook itself.
+
+    .DESCRIPTION
+      Retrieves the raw Facebook Time Line either from the local cache or from Facebook itself.
+
+    .EXAMPLE
+      $RawFBTimeLine = Get-RawFBTimeLine
+
+    .NOTES
+      Low-level function.
+
+    .LINK
+      N/A
+  #>
+
+
+  $CacheFile    = "$CurrentCacheDir\FBTimeLineCache-$($connections.Facebook.DefaultPageName).xml"
+
+  if ( Test-Path $CacheFile ) {
+    if ( ( Get-ChildItem $CacheFile ).LastWriteTime.Subtract( $(Get-Date) ).TotalHours -lt -($connections.Facebook.PostsCacheExpiration) ) {
+      $TimeLine = Get-FBPost -Connection $connection
+      $TimeLine | Export-CliXml $CacheFile
+    } else {
+      $TimeLine = Import-CliXml $CacheFile
+    }
+  } else {
+    $TimeLine   = Get-FBPost -Connection $connection
+    $TimeLine | Export-CliXml $CacheFile
   }
 
   $TimeLine
+}
+
+
+# --------------------------------------------------------------------------------------------------
+
+
+function New-FBConnectionDetails() {
+  <#
+    .SYNOPSIS
+      Creates a new connection to Facebook and displays the associated configuration information.
+
+    .DESCRIPTION
+      Creates a new connection to Facebook and displays the associated configuration information.
+
+    .EXAMPLE
+      New-FBConnectionDetails
+
+    .NOTES
+      High-level function. It is used during initial configuration or whenever there is a need to refresh connection details in the configuration file.
+
+    .LINK
+      N/A
+  #>
+
+
+  $connection = New-FBConnection -ExtendToken
+
+  $connection
+
+  Get-FBPage | Select Name, PageId, access_token | Format-List
+}
+
+
+function Get-FBTimeLine( [switch] $quick ) {
+  <#
+    .SYNOPSIS
+      Retrieves a normalized Facebook Time Line either from the local cache or from Facebook itself.
+
+    .DESCRIPTION
+      Retrieves a normalized Facebook Time Line either from the local cache or from Facebook itself.
+
+    .EXAMPLE
+      $FBTimeLine = Get-FBTimeLine -quick
+
+    .NOTES
+      High-level function.
+
+    .LINK
+      N/A
+  #>
+
+
+  # $DebugPreference = "Continue"
+
+  [PSObject[]] $RawTimeLine                = @()
+  [System.Collections.ArrayList] $TimeLine = @()
+
+
+  $RawTimeLine         = Get-RawFBTimeLine -connection $connections.Facebook.connection
+  $results             = $RawTimeLine.count
+
+  if ( $quick ) {
+    $i                 = 1
+    $ExecutionTime     = [Diagnostics.Stopwatch]::StartNew()
+    $ExecutionTime.Stop()
+
+    foreach ( $post in $RawTimeLine ) {
+      Write-Progress -Activity "Normalizing Information (QuickMode) ..." -Status "Progress: $i / $results - ETC: $( '{0:#0.00}' -f (( $results - $i ) * $ExecutionTime.Elapsed.TotalMinutes ) ) minutes - Time Elapsed: $( '{0:#0.00}' -f (( $i - 1 ) * $ExecutionTime.Elapsed.TotalMinutes ) ) minutes" -PercentComplete ( ( $i / $results ) * 100 )
+
+      $ExecutionTime   = [Diagnostics.Stopwatch]::StartNew()
+
+      $NormalizedPost  = $post | ConvertTo-FBNormalizedPost
+
+      $TimeLine.Add( $( $NormalizedPost | ConvertTo-JSON -Compress ) ) | Out-Null
+
+      $ExecutionTime.Stop()
+
+      $i++
+    }
+  } else {
+    $i                 = 1
+    $ExecutionTime     = [Diagnostics.Stopwatch]::StartNew()
+    $ExecutionTime.Stop()
+
+    foreach ( $post in $RawTimeLine ) {
+      Write-Progress -Activity "Normalizing Information ..." -Status "Progress: $i / $results - ETC: $( '{0:#0.00}' -f (( $results - $i ) * $ExecutionTime.Elapsed.TotalMinutes ) ) minutes - Time Elapsed: $( '{0:#0.00}' -f (( $i - 1 ) * $ExecutionTime.Elapsed.TotalMinutes ) ) minutes" -PercentComplete ( ( $i / $results ) * 100 )
+
+      $ExecutionTime   = [Diagnostics.Stopwatch]::StartNew()
+
+      $NormalizedPost  = $post | ConvertTo-FBNormalizedPost -IncludeAll
+
+      $TimeLine.Add( $( $NormalizedPost | ConvertTo-JSON -Compress ) ) | Out-Null
+
+      $ExecutionTime.Stop()
+
+      $i++
+    }
+  }
+
+  $TimeLine | ForEach-Object { ConvertFrom-JSON $_ }
+
+  # $DebugPreference = "SilentlyContinue"
+}
+
+
+function ConvertTo-FBNormalizedPost( [switch] $IncludeAll, [string] $schema = $SCHEMA_DEFAULT ) {
+  <#
+    .SYNOPSIS
+      Normalizes post information by mapping Facebook API data structures into a normalized one. Additionally, it also gathers additional relevant information about that post.
+
+    .DESCRIPTION
+      Normalizes post information by mapping Facebook API data structures into a normalized one. Additionally, it also gathers additional relevant information about that post.
+
+    .EXAMPLE
+      $NormalizedFBPost   = $FBPost  | ConvertTo-FBNormalizedPost -IncludeAll
+      $NormalizedFBPosts += $FBPosts | ConvertTo-FBNormalizedPost -IncludeAll
+
+    .NOTES
+      High-level function. However, under normal circumstances, an end user shouldn't feel the need to use this function: other high-level functions use of it in order to make this details transparent to the end user.
+
+    .LINK
+      N/A
+  #>
+
+
+  begin {
+    # $DebugPreference = "Continue"
+
+    $LogFileName              = "FacebookModule"
+
+    [PSObject[]] $NewTimeLine = @()
+    $TimeToWait               = $connections.Facebook.ApiDelay
+
+    if ( $IncludeAll ) {
+      $IncludeRTs             = $true
+      $IncludeFavorites       = $true
+      $IncludeLinkMetrics     = $true
+    }
+  }
+
+  process {
+    $post                                               = $_
+    $NewPost                                            = New-SMPost -schema $schema
+    $NewPost.RetainUntilDate                            = "{0:$DefaultDateFormat}" -f [datetime] ( ( [datetime] $NewPost.RetainUntilDate ).AddDays( $connections.Facebook.DataRetention ) )
+
+    $NewPost.NormalizedPost.PostId                      = if ( $connections.Facebook.PrivacyLevel -le $PRIVACY_LEVEL_MEDIUM ) { $post.id              } else { Get-SMPostDigest $post.id              }
+    $NewPost.NormalizedPost.PostDigest                  = Get-SMPostDigest $post.message
+
+    if ( $post.link -match "photo.php" ) {
+      $NewPost.NormalizedPost.PermaLink                 = if ( $connections.Facebook.PrivacyLevel -le $PRIVACY_LEVEL_MEDIUM ) { $post.link            } else { Get-SMPostDigest $post.link            }
+    } else {
+      $NewPost.NormalizedPost.PermaLink                 = if ( $connections.Facebook.PrivacyLevel -le $PRIVACY_LEVEL_MEDIUM ) { $post.actions[0].link } else { Get-SMPostDigest $post.actions[0].link }
+    }
+
+    $NewPost.NormalizedPost.ChannelName                 = $CHANNEL_NAME_FACEBOOK
+    $NewPost.NormalizedPost.SubChannelName              = if ( $connections.Facebook.PrivacyLevel -le $PRIVACY_LEVEL_MEDIUM ) { $post.from.name       } else {  Get-SMPostDigest $post.from.name      }
+    $NewPost.NormalizedPost.SourceDomain                = $VALUE_NA
+
+    if ( $post.type -eq $null ) {
+      $NewPost.NormalizedPost.PostType                  = $VALUE_NA
+    } else {
+      switch ( $post.type ) {
+        "link"   { $NewPost.NormalizedPost.PostType     = $POST_TYPE_LINK    }
+        "status" { $NewPost.NormalizedPost.PostType     = $POST_TYPE_MESSAGE }
+        "photo"  { $NewPost.NormalizedPost.PostType     = $POST_TYPE_PICTURE }
+        "video"  { $NewPost.NormalizedPost.PostType     = $POST_TYPE_VIDEO   }
+        "swf"    { $NewPost.NormalizedPost.PostType     = $POST_TYPE_VIDEO   }
+        "event"  { $NewPost.NormalizedPost.PostType     = $POST_TYPE_EVENT   }
+        default  { $NewPost.NormalizedPost.PostType     = $POST_TYPE_MESSAGE }
+      }
+    }
+
+    $NewPost.NormalizedPost.ChannelType                 = $CHANNEL_TYPE_SN
+    $NewPost.NormalizedPost.ChannelDataEngine           = $CHANNEL_DATA_ENGINE_RESTAPI
+    $NewPost.NormalizedPost.SourceFormat                = $DATA_FORMAT_JSON
+    $NewPost.NormalizedPost.Language                    = $VALUE_NA
+
+    $NewPost.NormalizedPost.AuthorId                    = if ( $connections.Facebook.PrivacyLevel -le $PRIVACY_LEVEL_LOW    ) { $post.from.id         } else { Get-SMPostDigest $post.from.id         }
+    $NewPost.NormalizedPost.AuthorDisplayName           = if ( $connections.Facebook.PrivacyLevel -le $PRIVACY_LEVEL_LOW    ) { $post.from.name       } else { Get-SMPostDigest $post.from.name       }
+
+    $NewPost.NormalizedPost.PublishingDate              = "{0:$DefaultDateFormat}" -f $post.created_time
+
+    $NewPost.NormalizedPost.Title                       = $post.name
+    $NewPost.NormalizedPost.PostContent                 = $post.message
+
+    $NewPost.NormalizedPost.SourceApplication           = $post.application.name
+
+    if ( $post.application.name -eq $null ) {
+      $NewPost.NormalizedPost.SourceApplication         = $VALUE_NA
+    } else {
+      $NewPost.NormalizedPost.SourceApplication         = $post.application.name
+    }
+
+    $NewPost.NormalizedPost.SharedLinks                 = @()
+    $NewPost.NormalizedPost.SharedTargetURLs            = @()
+    $NewPost.NormalizedPost.Tags                        = @()
+
+    $NewPost.NormalizedPost.SharedLinks                += if ( $post.link -eq $null ) { "" } else { $post.link }
+    $NewPost.NormalizedPost.SharedTargetURLs           += if ( $post.link -match $LinkShorteners ) { ( $post.link | Expand-ShortLink ).ExpandedUrl } else { $post.link }
+
+    if ( $post.message -ne $null ) {
+      $post.message.Split("#")[1..$($post.message.Split("#").Count)] | ForEach-Object {
+        $NewPost.NormalizedPost.Tags += $_.Split(" ")[0]
+      }
+    }
+
+
+    if ( $IncludeLinkMetrics ) {
+      if ( $NewPost.NormalizedPost.SharedLinks -gt 0 ) {
+        $NewPost.NormalizedPost.SharedLinks | ForEach-Object {
+          if ( $_ -like "*bit*" ) {
+            $LinkGlobalMetrics                          = Get-BLLinkGlobalMetrics $_
+
+            $NewPost.NormalizedPost.ClickThroughsCount += $LinkGlobalMetrics.clicks.link_clicks
+            $NewPost.NormalizedPost.InteractionsCount  += $LinkGlobalMetrics.shares.total_shares
+
+            Start-Sleep -Seconds $connections.BitLy.ApiDelay
+          }
+        }
+      }
+    }
+
+    $SourceCode                                         = Get-PageSourceCodeFromIE $NewPost.NormalizedPost.PermaLink
+    $NewPost.NormalizedPost.InterestCount               = Get-RawFBPostLikesFromPage    ([ref] $SourceCode)
+    $NewPost.NormalizedPost.InteractionsCount           = Get-RawFBPostCommentsFromPage ([ref] $SourceCode)
+    $NewPost.NormalizedPost.AudienceCount               = Get-RawFBPostAudienceFromPage ([ref] $SourceCode)
+
+    if ( $post.shares -ne $null ) {
+      $NewPost.NormalizedPost.InteractionsCount += $post.shares.count
+    }
+
+
+    $ExistingConnections                                = $NewPost.PostConnections.count
+    $i                                                  = $ExistingConnections
+
+    if ( $post.likes.count -gt 0 ) {
+      $NewPost.PostConnections                         += New-Object PSObject -Property $UserConnectionsTemplate
+
+      $post.likes | ForEach-Object {
+        $NewPost.PostConnections[$i].UserId             = if ( $connections.Facebook.PrivacyLevel -eq $PRIVACY_LEVEL_NONE ) { $_.id                               } else { Get-SMPostDigest $_.id                               }
+        $NewPost.PostConnections[$i].UserDisplayName    = if ( $connections.Facebook.PrivacyLevel -eq $PRIVACY_LEVEL_NONE ) { $_.name                             } else { Get-SMPostDigest $_.name                             }
+        $NewPost.PostConnections[$i].UserProfileUrl     = if ( $connections.Facebook.PrivacyLevel -eq $PRIVACY_LEVEL_NONE ) { "https://www.facebook.com/$($_.id)" } else { Get-SMPostDigest "https://www.facebook.com/$($_.id)" }
+        $NewPost.PostConnections[$i].EngagementType     = $ENGAGEMENT_TYPE_INTEREST
+
+        if ( ( $ExistingConnections + $post.likes.count ) -gt ( $i + 1 ) ) {
+          $NewPost.PostConnections                     += New-Object PSObject -Property $UserConnectionsTemplate
+        }
+
+        $i++
+      }
+    }
+
+
+    $ExistingConnections                                = $NewPost.PostConnections.count
+    $i                                                  = $ExistingConnections
+
+    if ( $post.comments.count -gt 0 ) {
+      $NewPost.PostConnections                         += New-Object PSObject -Property $UserConnectionsTemplate
+
+      $post.comments.from | ForEach-Object {
+        $NewPost.PostConnections[$i].UserId             = if ( $connections.Facebook.PrivacyLevel -eq $PRIVACY_LEVEL_NONE ) { $_.id                               } else { Get-SMPostDigest $_.id                               }
+        $NewPost.PostConnections[$i].UserDisplayName    = if ( $connections.Facebook.PrivacyLevel -eq $PRIVACY_LEVEL_NONE ) { $_.name                             } else { Get-SMPostDigest $_.name                             }
+        $NewPost.PostConnections[$i].UserProfileUrl     = if ( $connections.Facebook.PrivacyLevel -eq $PRIVACY_LEVEL_NONE ) { "https://www.facebook.com/$($_.id)" } else { Get-SMPostDigest "https://www.facebook.com/$($_.id)" }
+        $NewPost.PostConnections[$i].EngagementType     = $ENGAGEMENT_TYPE_INTERACTION
+
+        if ( ( $ExistingConnections + $post.comments.count ) -gt ( $i + 1 ) ) {
+          $NewPost.PostConnections                     += New-Object PSObject -Property $UserConnectionsTemplate
+        }
+
+        $i++
+      }
+    }
+
+
+    Start-Sleep -Seconds $TimeToWait
+
+    $NewPost.RawObject                                  = $post
+
+    $NewPost
+
+    # $DebugPreference = "SilentlyContinue"
+  }
+}
+
+
+function Update-FBPosts( [PSObject[]] $from ) {
+  <#
+    .SYNOPSIS
+      Updates information about a collection of posts. Unlike Update-FBPost, this function doesn't accept data from the pipeline. Howerver, it does provide feedback about the progress of the update process.
+
+    .DESCRIPTION
+      Updates information about a collection of posts. Unlike Update-FBPost, this function doesn't accept data from the pipeline. Howerver, it does provide feedback about the progress of the update process.
+
+    .EXAMPLE
+      $UpdatedFacebookTimeLine = Update-FBPosts -from $NormalizedTimeLine
+      $UpdatedFacebookTimeLine = Update-FBPosts -from $PermaLinksList
+
+    .NOTES
+      High-level function.
+
+    .LINK
+      N/A
+  #>
+
+
+  [System.Collections.ArrayList] $UpdatedPosts = @()
+
+  $i               = 1
+  $ExecutionTime   = [Diagnostics.Stopwatch]::StartNew()
+  $ExecutionTime.Stop()
+
+  foreach ( $post in $from ) {
+    Write-Progress -Activity "Updating Posts ..." -Status "Progress: $i / $($from.Count) - ETC: $( '{0:#0.00}' -f $( $($from.Count) - $i ) * $ExecutionTime.Elapsed.TotalMinutes ) minutes - Time Elapsed: $( '{0:#0.00}' -f $( $i *  $ExecutionTime.Elapsed.TotalMinutes ) ) minutes" -PercentComplete ( ( $i / $($from.Count) ) * 100 )
+
+    Write-Debug "[Update-FBPosts] - CurrentElement:      $i"
+    Write-Debug "[Update-FBPosts] - TotalElements:       $($from.Count)"
+    Write-Debug "[Update-FBPosts] - ElapsedMinutes:      $($ExecutionTime.Elapsed.TotalMinutes)"
+
+    $ExecutionTime = [Diagnostics.Stopwatch]::StartNew()
+
+    $UpdatedPosts.Add( $( $post | Update-FBPost -IncludeAll | ConvertTo-JSON ) ) | Out-Null
+
+    $ExecutionTime.Stop()
+
+    $i++
+  }
+
+  $UpdatedPosts | ForEach-Object { if ( $_ -ne $null ) { ConvertFrom-JSON $_ } }
+}
+
+
+function Update-FBPost( [switch] $IncludeAll, [string] $schema = $SCHEMA_DEFAULT ) {
+  <#
+    .SYNOPSIS
+      Updates information about a collection of posts. Unlike Update-FBPosts, this function accepts data from the pipeline. Howerver, it doesn't provide feedback about the progress of the update process.
+
+    .DESCRIPTION
+      Updates information about a collection of posts. Unlike Update-FBPosts, this function accepts data from the pipeline. Howerver, it doesn't provide feedback about the progress of the update process.
+
+    .EXAMPLE
+      $UpdatedFBPost     = $NormalizedFacebookPost     | Update-FBPost -IncludeAll
+      $UpdatedFBTimeLine = $NormalizedFacebookTimeLine | Update-FBPost -IncludeAll
+
+      $UpdatedFBPost     = $PermaLink                  | Update-FBPost -IncludeAll
+      $UpdatedFBTimeLine = $PermaLinksList             | Update-FBPost -IncludeAll
+
+    .NOTES
+      High-level function.
+
+    .LINK
+      N/A
+  #>
+
+
+  begin {
+    $LogFileName = "FacebookModule"
+    $TimeToWait  = $connections.Facebook.ApiDelay
+  }
+
+  process {
+    $UpdatedPost                         = [PSCustomObject] @{}
+    $SearchByPermalink                   = $false
+
+    if ( $_ -is [string] ) {
+      $post                              = New-SMPost -schema $schema
+
+      if ( $_ -ilike "*$($connections.Facebook.DefaultPageName)*" ) {
+        $post.NormalizedPost.PermaLink   = $_ -replace $connections.Facebook.DefaultPageName, $connections.Facebook.DefaultPageId
+      } else {
+        $post.NormalizedPost.PermaLink   = $_
+      }
+
+      if ( $_ -ilike "*$CHANNEL_NAME_FACEBOOK*" ) {
+        $post.NormalizedPost.ChannelName = $CHANNEL_NAME_FACEBOOK
+        $SearchByPermalink               = $true
+      } else {
+        $post.NormalizedPost.ChannelName = $CHANNEL_NAME_UNKNOWN
+      }
+    } else {
+      $post                              = $_
+    }
+
+
+    if ( $post.NormalizedPost.ChannelName -eq $CHANNEL_NAME_FACEBOOK ) {
+      $UpdatedTimeLine                   = Get-RawFBTimeLine -connection $connections.Facebook.connection
+
+      if ( $SearchByPermalink ) {
+        $PostFromFacebook                = Search-RawFBPost -text $post.NormalizedPost.PermaLink  -on ([ref] $UpdatedTimeLine) -by permalink
+      } else {
+        $PostFromFacebook                = Search-RawFBPost -text $post.NormalizedPost.PostDigest -on ([ref] $UpdatedTimeLine)
+      }
+
+      if ( $PostFromFacebook  -eq $null ) {
+        "$(get-date -format u) [Update-FBPost] - Unable to retrieve post: $( $post.NormalizedPost.PermaLink )" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+        Write-Warning "[Update-FBPost] - Unable to retrieve post: $( $post.NormalizedPost.PermaLink )"
+
+        return $null
+      } else {
+        $PostFromFacebook        = $PostFromFacebook | ConvertTo-FBNormalizedPost -IncludeAll
+      }
+    } else {
+      Write-Debug "[Update-FBPost] - Skipping non-Facebook post: $($_.ChannelName)"
+
+      return $null
+    }
+
+    $ChangeLog                   = New-Object PSObject -Property $ChangeLogTemplate
+
+    $ChangeLog.TimeStamp         = Get-Date -format $DefaultDateFormat
+    $ChangeLog.PropertyName      = "LastUpdateDate"
+    $ChangeLog.OriginalValue     = $post.LastUpdateDate
+    $ChangeLog.NewValue          = $ChangeLog.TimeStamp
+
+    $UpdatedPost                 = $post
+    $UpdatedPost.LastUpdateDate  = $ChangeLog.TimeStamp
+    [PSObject[]] $UpdatedPost.ChangeLog += $ChangeLog
+
+    ( $UpdatedPost.NormalizedPost | Get-Member -MemberType NoteProperty ).Name | ForEach-Object {
+      Write-Debug "[Update-FBPost] - Current Property Name: $_"
+
+      if ( $post.NormalizedPost.$_ -ne $null ) {
+        $CurrentChanges            = Compare-Object $post.NormalizedPost.$_ $PostFromFacebook.NormalizedPost.$_
+
+        if ( $CurrentChanges.Count -ne 0 ) {
+          $ChangeLog.TimeStamp     = $UpdatedPost.LastUpdateDate
+          $ChangeLog.PropertyName  = $_
+          $ChangeLog.OriginalValue = $post.NormalizedPost.$_
+          $ChangeLog.NewValue      = $PostFromFacebook.NormalizedPost.$_
+
+          [PSObject[]] $UpdatedPost.ChangeLog += $ChangeLog
+        }
+      }
+    }
+
+    $UpdatedPost.NormalizedPost  = $PostFromFacebook.NormalizedPost
+    [PSObject[]] $UpdatedPost.RawObject += $PostFromFacebook.RawObject
+
+    $UpdatedPost
+  }
 }

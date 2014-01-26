@@ -1,82 +1,209 @@
-   Social Media Scripting Framework v0.2 BETA
-   -----------------------------------------------------------------------------
+   Social Media Scripting Framework v0.5 BETA
+   -------------------------------------------------------------------------------------------------
 
 
 A. RELEASE NOTES:
-   =============================================================================
+   =================================================================================================
 
 1. Available modules:
 
-   + Social Media:    Twitter, Facebook, LinkedIn, Bitly.com
-   + General Purpose: Data Sets, Web browsing
-   + Data Stores:     Excel
+   + Social Media:        Twitter, Facebook, LinkedIn
+   + Other Digital Media: Feeds (RSS, Atom, RDF, WXR)
+   + General Purpose:     Datasets, Web browsing, Bitly.com
+   + Data Stores:         Excel
 
-2. Twitter:
+   + Total functions:     131
 
-   + Full Support of API 1.1.
-   + Web scrapping helper functions.
-   + Timeline normalization.
-   + Timeline analysis.
-   + Custom Timeline rebuilding.
-   + Other high-level abstractions:
-     + Send-Tweet.
-     + Get-TwitterSerch.
-     + Get-TweetsFromUser.
-     + Get-TwitterFollowers.
-     + Get-TwitterProfile.
+2. General Changes
 
-3. Facebook:
+   + New Design/Architecture:
+     + Unified Data Structures for all Digital Media channels.
+     + Unified semantics for all Digital Media channels.
+
+   + Configuration and Session profiles.
+   + Data versioning support.
+   + Data privacy policies.
+   + Data expiration/aging support.
+   + Data tagging/labeling support.
+   + Data normalization has been made mandatory and transparent to end users.
+   + Improved data quality checks.
+   + Significantly enhanced user experience and ease of use. The so-called "Timeline rebuilding"
+     concept is no longer needed or used.
+   + Logging and caching capabilities.
+   + Improved and enhanced exception handling.
+   + Improved Debugging/Tracing capabilities.
+   + Now function names try conform more closely to PowerShell naming conventions.
+   + TimeLine analysis functions are now independent from the Digital Media channel.
+   + Basic help-based documentation.
+   + Lots of bug fixes.
+
+3. Twitter:
+
+   + Native API support over HTTPS.
+   + Web scrapping helper functions: 5
+   + API-related and other internal functions: 22
+   + High-level functions: 10
+     + Get-TwTimeLine, Update-TwPosts, Update-TwPost
+     + Get-TwUserProfileData, Update-TwUsersProfileData, Update-TwUserProfileData.
+     + Search-TwPosts.
+
+4. Facebook:
 
    + Partial native API support.
-   + Web scrapping helper functions.
-   + Timeline normalization.
-   + Timeline analysis.
-   + Custom Timeline rebuilding.
-   + Other high-level abstractions:
-     + Get-FBTimeLineProspects
+   + Web scrapping helper functions: 3
+   + API-related and other internal functions: 5
+   + High-level functions: 5
+     + New-FBConnectionDetails
+     + Get-FBTimeLine, Update-FBPosts, Update-FBPost
 
-4. LinkedIn:
+5. LinkedIn:
 
-   + Web scrapping helper functions: Groups & Company Pages.
-   + Custom Timeline rebuilding.
+   + Native API support over HTTPS.
+   + Company Pages and Groups.
+   + API-related and other internal functions: 15
+   + High-level functions: 6
+     + New-LINConnection
+     + Get-LINTimeLine, Update-LINPosts, Update-LINPost
+     + Update-LINEngagedProfiles, Update-LINUserProfileData
 
-5. Bitly.com:
+6. Bitly.com:
 
-   + Web scrapping helper functions.
+   + Native API support over HTTPS.
+   + Web scrapping helper functions: 1
+   + API-related and other internal functions: 1
+   + High-level functions: 5
+     + Get-BLOAuthToken
+     + Get-BLLinkGlobalMetrics, Get-BLLinkMetrics
+     + Measure-BLImpact
 
-6. Data Sets:
+7. Datasets:
 
    + Load/Save to XML.
-   + Dynamic & 'relaxed' DataSet mapping.
+   + Dynamic & 'relaxed' DataSet mapping (lightweight ETL-like capabilities).
+   + Internal functions: 5
+   + High-level functions: 3
+     + Import-DataSet, Export-DataSet
+     + Update-DataSet
 
-7. Excel:
+8. Excel:
 
-   + Primitive operations: Load, Save, Update.
+   + Primitive operations: Load, Save.
+   + Internal functions: 6
+   + High-level functions: 2
+     + Import-ExcelDataSet, Export-ExcelDataSet
+
+9. Feeds:
+
+   + Support for RSS, Atom, RDF and WXR (WordPress eXtended RSS).
+   + Internal functions: 7
+   + High-level functions: 4
+     + Get-FeedTimeLine, Update-FeedPosts, Update-FeedPost
+
+10. Other Core functions:
+
+   + High-level functions: 27
+     + Get-SNTimeLine, Update-SNPosts
+     + ContertTo-PrivateTimeLine, ConvertTo-PrivatePost
+     + ConvertTo-PrivateUserProfiles, ConvertTo-PrivateUserProfileData
+     + Expand-TimeLine, Measure-TLTopics, Measure-TopicsTrends
+     + Measure-SMPostTopics, Measure-SMPostConnections, Measure-SMPostProspects,
+       Measure-SMPostTimeProfile, Measure-SMPostImpact
+     + New-SMSessionStore, Get-SMSessionStores, Remove-SMSessionStores
+     + Set-SMProfile
+     + Test-SMSettings
+
+   + Browsing functions: 3
+     + Get-PageSourceCode, Get-PageSourceCodeFromIE, Open-WebPage
+
+   + Helper functions: 6
+
 
 
 B. KNOWN ISSUES:
-   =============================================================================
+   =================================================================================================
 
 1. Facebook:
 
    + Current implementation doesn't make consume the Facebook Insights API.
-   + Prospect list is known to be accurate though incomplete. It seems to be a
-     problem or limitation with the current implementation of the Facebook Module.
+   + Prospect list is known to be accurate though incomplete (only the first four elements of each
+     entity seem to get reported). It seems to be a problem or a limitation on the current
+     implementation of the Facebook Module.
 
-2. Data Sets:
+2. Feeds:
 
-   + The Update-DataSet command add an additional $null object as the first element
-     of the object collection that creats as its output. The source of this problem
-     is still under research.
+   + Despite having well defined and standard formats, parsing RSS feeds in the real world without
+     any flaws represent quite a significant challenge. If you'd ever tried, you know what I mean...
+     The current version does a "decent" job, but I am afraid that it is still far from being
+     perfect.
 
-     $UpdatedCampaign = Update-DataSet $campaign -with $FBTimeLine -using $FBMappingRules
+     Eventually, you will find some errors on data acquisition coming from these formats. I have
+     tested current implementation against thousands of posts in different formats. However, my
+     experience shows that this happens on a small percentage of them. Anyway, you should know that
+     this could, occasionally, happen.
+
+     Hopefully, this will be improved on future versions ... ;-)
+
+3. Excel Datasets:
+
+   + The Excel library used (EPPlus) might find a "hard time" with certain Excel files. This
+     situation has been reproduced during the test phase. However, the alternative of using
+     Microsoft Excel via COM Autoamation is not considered "suitable" because of its serious
+     performance limitations: it took it almost 2 hours to read a 100 lines from a file.
 
      WORKAROUND:
 
-     $UpdatedCampaign = $(Update-DataSet $campaign -with $FBTimeLine -using $MappingRules) -ne $null
+     The nature of the Social Media Scripting Framework is very "data focused". As a result, the
+     only thing we need is to be able to read and write data back and forth. Should you find any
+     problem, just copy your raw dataset into a new and clean workbook; do your processing and copy
+     the data back into the original sheet.
 
-3. General:
+     Eventually, I will find a library that minimizes problems on this area. In the meantime, we
+     shall live with this workaround.
 
-   + Current Libraries don't work reliably under a PowerShell Module. However, they do
-     work perfectly fine as standalone functions under the context of the 'Social Media
-     Scripting Console'. The source of this problem is still under research.
+4. General:
+
+   + Current Libraries don't work reliably under a PowerShell Module. However, they do work
+     perfectly fine as standalone functions under the context of the 'Social Media Scripting
+     Console'. The source of this problem is still under research.
+
+
+
+C. ACKNOWLEDGEMENTS:
+   =================================================================================================
+
+   Last, but not least, I would like to thank anyone that have helped me in anyway achieving this
+   milestone.
+
+   Some of you have helped by fixing bugs, providing feedback or when I was blocked with weird
+   coding issues. Others have shared code so that I could learn from your contributions. In addition
+   to those that have helped me with the technology, I would also like to thank all off you that
+   have encouraged me and supported me so that I was able to go on.
+
+     Mateusz Świetlicki      - https://github.com/mswietlicki
+     Jon Newman              - https://www.codeplex.com/site/users/view/jonn_msft
+     Trevor Sulivan          - trevorsullivan.net
+     Karl Prosser            - https://twitter.com/karlprosser
+     Shay Levy               - http://powershay.com/
+     Joel Bennet             - http://huddledmasses.org/
+     Kirk Munro              - http://www.poshoholic.com/
+     Jeffery Hicks           - http://jdhitsolutions.com/blog/
+     June Blender            - https://twitter.com/juneb_get_help
+     Javier Muñoz            - http://javiermunhoz.com/blog/
+     Enrique Rivas           - http://www.peorparaelsol.com/
+     Jose Miguel Sanz        - https://twitter.com/jmigsm
+     Celestino Güemes        - https://twitter.com/tguemes
+     Paul Moore              - https://twitter.com/PaulMooreO
+     Jose Esteban Lauzán     - https://twitter.com/esteban_lauzan
+     Francisco Pinheiro      - https://twitter.com/innoFPinheiro
+     Pedro Baldanta          - https://twitter.com/PBaldanta
+     Javier Cayeiro          - https://twitter.com/Cayeiro
+     Oscar Maqueda           - https://twitter.com/oscarmh
+     Jorge Leccia            - https://twitter.com/jorgeleccia
+     Guillermo Morales       - https://twitter.com/GMoralesSanchez
+     Mario Rodriguez Mier    - https://twitter.com/marior666
+     José Fernández Tamames  - https://twitter.com/jftamames
+     Ivan Varela             - https://twitter.com/_mspro
+     Samuel Martínez         - https://twitter.com/mumasl
+     Antonio Martínez García - https://twitter.com/amartinezgar
+     Jose Luis Jiménez Abad  - http://unvinomas.wordpress.com/
+     Noelia Vázquez          - https://twitter.com/noeliavazquezm
