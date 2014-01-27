@@ -1,5 +1,5 @@
 OPEN SOURCE LICENSES IN USE
-===========================
+====================================================================================================
 
 1. Social Media Scripting Framework - GPL v2.0
   http://www.gnu.org/licenses/gpl-2.0.html

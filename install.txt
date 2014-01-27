@@ -45,16 +45,23 @@ B. INITIAL CONFIGURATION STEPS:
      under the LinkedIn branch with the correct values. Namely, 'ApiKey', 'SecretKey', 'UserToken',
      and 'UserSecret'.
 
-   Step 3: From the Social Media Scripting Console (SMSC), run the following commands:
+   Step 3: From the Social Media Scripting Console (SMSC), run the following command:
+
+     >> SMSC [1] > New-LINConnection
+
+   Step 4: Edit the file '<InstallDir>\profiles\master\connections.ps1' and update each setting with
+     under the LinkedIn branch with the correct values. Namely, 'AccessToken'.
+
+   Step 5: From the Social Media Scripting Console (SMSC), run the following commands:
 
      >> SMSC [1] > Get-RawLINCompanyIdByDomain -domain "<YourEmailDomainName>" -NamePattern "<YourCompanyName>"
      >> SMSC [1] > Get-RawLINGroupIdByName -name "<YourGroupName>"
 
-   Step 4: Edit the file '<InstallDir>\profiles\master\connections.ps1' and update each setting with
+   Step 6: Edit the file '<InstallDir>\profiles\master\connections.ps1' and update each setting with
      under the LinkedIn branch with the correct values. Namely, 'DefaultCompanyId', 'DefaultCompanyName',
      'DefaultGroupId', and 'DefaultGroupName'.
 
-   Step 5: Edit the file '<InstallDir>\profiles\master\connections.ps1' and update the 'RedirectUri'
+   Step 7: Edit the file '<InstallDir>\profiles\master\connections.ps1' and update the 'RedirectUri'
      property under the LinkedIn branch with the correct value for your case.
 
 6. Set up your Facebook Credentials
