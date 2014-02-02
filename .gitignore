@@ -1,0 +1,6 @@
+_*/
+*.bak
+connections.ps1
+feeds/*
+cache/*
+session*/

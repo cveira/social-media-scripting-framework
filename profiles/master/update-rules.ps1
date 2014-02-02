@@ -60,7 +60,7 @@
 
 
 $CampaignRules = @{
-  KeyProperty = "PermaLink",                           "Post_PermaLink_URL"
+  KeyProperty  = "PermaLink",                          "Post_PermaLink_URL"
 
   Done         = "@yes",                               "Done"
   Channel      = "ChannelName",                        "Channel"
@@ -85,5 +85,5 @@ $CampaignRules = @{
 $EditorialControlRules = @{
   KeyProperty  = "Link",                               "Short_Link"
   Clicks       = "ClickThroughs",                      "Clicks"
-  LastUpdate   = "&{ Get-Date -format 'yyyy/MM/dd'} ", "LastUpdateDate"
+  LastUpdate   = "&{ Get-Date -format 'yyyy/MM/dd' }", "LastUpdateDate"
 }

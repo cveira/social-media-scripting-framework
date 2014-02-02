@@ -2,8 +2,8 @@
 -------------------------------------------------------------------------------
 Name:    Social Media Scripting Framework
 Module:  Data Sets
-Version: 0.5 BETA
-Date:    2014/01/20
+Version: 0.5.1 BETA
+Date:    2014/02/02
 Author:  Carlos Veira Lorenzo
          e-mail:   cveira [at] thinkinbig [dot] org
          blog:     thinkinbig.org
@@ -463,6 +463,7 @@ function Update-DataSet( $DataSet, $with, [HashTable] $using = @{}, $BindByName 
       Write-Debug "[Update-DataSet] -   SourceKeyName:           $SourceKeyName"
       Write-Debug "[Update-DataSet] -   DestinationKeyName:      $DestinationKeyName"
       Write-Debug "[Update-DataSet] -   UpdatedDataSet.count:    $($UpdatedDataSet.count)"
+      Write-Debug "[Update-DataSet]"
 
       # $position                 = Find-ObjectPosition -value $SourceData.$($rules.KeyProperty[$SOURCE_PROPERTY]) -from $DataSet -using $rules.KeyProperty[$DESTINATION_PROPERTY]
       $position                 = Find-ObjectPosition -value $SourceData.$SourceKeyName -from $DataSet -using $DestinationKeyName
@@ -472,24 +473,33 @@ function Update-DataSet( $DataSet, $with, [HashTable] $using = @{}, $BindByName 
       $NewItem                  = $null
 
       if ( $position -eq $OBJECT_NOT_FOUND ) {
+        Write-Debug "[Update-DataSet] -     Object not found. Creating new object."
+
         if ( $UpdatedDataSet.count -eq 0 ) {
           $NewItem              = New-DataSetItem -from $DataSet        -using "ObjectId"
         } else {
           $NewItem              = New-DataSetItem -from $UpdatedDataSet -using "ObjectId"
         }
       } else {
+        Write-Debug "[Update-DataSet] -     Object found. Cloning existing object."
+
         $NewItem                = $DataSet[$position]
       }
+
+      Write-Debug "[Update-DataSet]"
+
 
       # Binding properties by Name
 
       if ( $BindByName ) {
+        Write-Debug "[Update-DataSet] -   Binding by Name."
+
         if ( $SourceSchema.Count -lt $TargetSchema.Count ) {
           foreach ( $property in $SourceSchema ) {
             $LazyPropertyName             = Get-MatchesInCollection  $property $TargetSchema
 
-            Write-Debug "[Update-DataSet] -   SourcePropertyName:      $property"
-            Write-Debug "[Update-DataSet] -   DestinationPropertyName: $LazyPropertyName"
+            Write-Debug "[Update-DataSet] -     SourcePropertyName:      $property"
+            Write-Debug "[Update-DataSet] -     DestinationPropertyName: $LazyPropertyName"
 
             if ( $LazyPropertyName -ne "" ) {
               $NewItem.$LazyPropertyName  = $SourceData.$property
@@ -499,28 +509,33 @@ function Update-DataSet( $DataSet, $with, [HashTable] $using = @{}, $BindByName 
           foreach ( $property in $TargetSchema ) {
             $LazyPropertyName     = Get-MatchesInCollection  $property $SourceSchema
 
-            Write-Debug "[Update-DataSet] -   SourcePropertyName:      $LazyPropertyName"
-            Write-Debug "[Update-DataSet] -   DestinationPropertyName: $property"
+            Write-Debug "[Update-DataSet] -     SourcePropertyName:      $LazyPropertyName"
+            Write-Debug "[Update-DataSet] -     DestinationPropertyName: $property"
 
             if ( $LazyPropertyName -ne "" ) {
               $NewItem.$property  = $SourceData.$LazyPropertyName
             }
           }
         }
+
+        Write-Debug "[Update-DataSet]"
       }
 
       # Binding properties as defined in Mapping Rules
 
       if ( $PropertyNames.Count -gt 0 ) {
+        Write-Debug "[Update-DataSet] -   Binding by Mapping Rules."
+
         foreach ( $PropertyName in $PropertyNames ) {
           $DestinationPropertyName = Get-MatchesInCollection  $rules.$PropertyName[$DESTINATION_PROPERTY] $TargetSchema
 
-          Write-Debug "[Update-DataSet] -   DestinationPropertyName: $DestinationPropertyName"
+          Write-Debug "[Update-DataSet] -     DestinationPropertyName: $DestinationPropertyName"
 
           if ( $rules.$PropertyName[$SOURCE_PROPERTY].SubString(0,1) -eq $DEFINE_LITERAL ) {
             $content = $rules.$PropertyName[$SOURCE_PROPERTY].SubString(1, ($rules.$PropertyName[$SOURCE_PROPERTY].Length - 1))
 
-            Write-Debug "[Update-DataSet] -   content:                 $content"
+            Write-Debug "[Update-DataSet] -     Rule contains a Literal"
+            Write-Debug "[Update-DataSet] -       Content:               $content"
 
             if ( ( $content -ne "" ) -and ( $DestinationPropertyName -ne "" ) ) {
               if ( $rules.$PropertyName[$REQUESTED_OPERATION] -eq $null ) {
@@ -533,12 +548,13 @@ function Update-DataSet( $DataSet, $with, [HashTable] $using = @{}, $BindByName 
             } else {
               "$(get-date -format u) [Update-DataSet] - SKIPPING RULE: unable to bind $PropertyName" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
 
-              Write-Debug "[Update-DataSet] -   SKIPPING RULE: unable to bind $PropertyName"
+              Write-Debug "[Update-DataSet] -     SKIPPING RULE: unable to bind $PropertyName"
             }
           } elseif ( $rules.$PropertyName[$SOURCE_PROPERTY].SubString(0,1) -eq $DEFINE_SCRIPTBLOCK ) {
             $content = Invoke-Expression $rules.$PropertyName[$SOURCE_PROPERTY]
 
-            Write-Debug "[Update-DataSet] -   content:                 $content"
+            Write-Debug "[Update-DataSet] -     Rule contains a ScriptBlog"
+            Write-Debug "[Update-DataSet] -       Content:               $content"
 
             if ( ( $content -ne "" ) -and ( $DestinationPropertyName -ne "" ) ) {
               if ( $rules.$PropertyName[$REQUESTED_OPERATION] -eq $null ) {
@@ -551,12 +567,14 @@ function Update-DataSet( $DataSet, $with, [HashTable] $using = @{}, $BindByName 
             } else {
               "$(get-date -format u) [Update-DataSet] - SKIPPING RULE: unable to bind $PropertyName" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
 
-              Write-Debug "[Update-DataSet] -   SKIPPING RULE: unable to bind $PropertyName"
+              Write-Debug "[Update-DataSet] -     SKIPPING RULE: unable to bind $PropertyName"
             }
           } else {
             $SourcePropertyName      = Get-MatchesInCollection  $rules.$PropertyName[$SOURCE_PROPERTY] $SourceSchema
 
-            Write-Debug "[Update-DataSet] -   SourcePropertyName:      $SourcePropertyName"
+            Write-Debug "[Update-DataSet] -     Standard Rule: mapping content from Source Property"
+            Write-Debug "[Update-DataSet] -       SourcePropertyName:    $SourcePropertyName"
+            Write-Debug "[Update-DataSet] -       Content:               $( $SourceData.$SourcePropertyName )"
 
             if ( ( $SourcePropertyName -ne "" ) -and ( $DestinationPropertyName -ne "" ) ) {
               if ( $rules.$PropertyName[$REQUESTED_OPERATION] -eq $null ) {
@@ -569,9 +587,11 @@ function Update-DataSet( $DataSet, $with, [HashTable] $using = @{}, $BindByName 
             } else {
               "$(get-date -format u) [Update-DataSet] - SKIPPING RULE: unable to bind $PropertyName" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
 
-              Write-Debug "[Update-DataSet] -   SKIPPING RULE: unable to bind $PropertyName"
+              Write-Debug "[Update-DataSet] -     SKIPPING RULE: unable to bind $PropertyName"
             }
           }
+
+          Write-Debug "[Update-DataSet]"
         }
       }
 
@@ -585,6 +605,7 @@ function Update-DataSet( $DataSet, $with, [HashTable] $using = @{}, $BindByName 
       }
 
       Write-Debug "[Update-DataSet] -   UpdatedDataSet.count:    $($UpdatedDataSet.count)"
+      Write-Debug "[Update-DataSet]"
     }
 
     Write-Debug "[Update-DataSet] - UpdatedDataSet.count:    $($UpdatedDataSet.count)"

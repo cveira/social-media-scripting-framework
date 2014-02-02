@@ -22,8 +22,9 @@ B. INITIAL CONFIGURATION STEPS:
 
    NOTE: We are going to use/assume 'C:\SMSF' in the examples below.
 
-2. Go to the folder '<InstallDir>\profiles\master' and remove the '.master' extension on those files
-     that happen to have it.
+2. Go to folders '<InstallDir>' and '<InstallDir>\profiles\master'. Remove the '.master' extension
+   on those files that happen to have it. Edit them and personalized its contents accordingly to
+   your particular needs.
 
 3. Launch the the Social Media Scripting Console (SMSC):
 

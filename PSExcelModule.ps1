@@ -2,8 +2,8 @@
 -------------------------------------------------------------------------------
 Name:    Social Media Scripting Framework
 Module:  Microsoft Excel
-Version: 0.5 BETA
-Date:    2014/01/20
+Version: 0.5.1 BETA
+Date:    2014/02/02
 Author:  Carlos Veira Lorenzo
          e-mail:   cveira [at] thinkinbig [dot] org
          blog:     thinkinbig.org
@@ -249,7 +249,11 @@ function Export-RawExcelDataSet( $DataSet, $sheet, [HashTable] $schema ) {
 
     $SourceSchema | ForEach-Object {
       if ( $schema.ContainsKey( $( $_.Name ) ) ) {
-        $sheet.Cells.Item( $object.ObjectId, $schema.$($_.Name) ).Value = $object.$($_.Name)
+        if ( $object.$($_.Name) -is [array] ) {
+          $sheet.Cells.Item( $object.ObjectId, $schema.$($_.Name) ).Value = [string] ( $object.$($_.Name) ) -replace " ", ", "
+        } else {
+          $sheet.Cells.Item( $object.ObjectId, $schema.$($_.Name) ).Value = $object.$($_.Name)
+        }
       }
     }
 

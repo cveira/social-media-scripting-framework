@@ -66,6 +66,7 @@ $UserConnectionsTemplate  = @{
   UserDescription         = ""
   UserProfileUrl          = ""
   UserProfileApiUrl       = ""
+  UserProfileMail         = ""
   Location                = ""
   EngagementType          = $ENGAGEMENT_TYPE_UNKNOWN # $ENGAGEMENT_TYPE_<XXX>
   CompoundReputationIndex = 0
@@ -196,6 +197,9 @@ $IdentitiesTemplate       = @{
 $SNPostTemplate_v01       = @{
   Version                 = $SCHEMA_VERSION_01
 
+  OwnerId                 = ""
+  OwnerDisplayName        = ""
+
   NormalizedPost          = New-Object PSObject -Property $NormalizedPostTemplate
   PostConnections         = @() # $UserConnectionsTemplate
   PostRelevance           = New-Object PSObject -Property $PostRelevanceTemplate
@@ -215,6 +219,9 @@ $SNPostTemplate_v01       = @{
 $SNUserTemplate_v01       = @{
   Version                 = $SCHEMA_VERSION_01
 
+  OwnerId                 = ""
+  OwnerDisplayName        = ""
+
   NormalizedUser          = New-Object PSObject -Property $NormalizedSNUserTemplate
 
   DebugCodes              = @()
@@ -230,7 +237,11 @@ $SNUserTemplate_v01       = @{
 $DigitalProfileTemplate_v01 = @{
   Version                 = $SCHEMA_VERSION_01
 
-  DisplayName             = ""
+  OwnerId                 = ""
+  OwnerDisplayName        = ""
+
+  ProfileId               = ""
+  ProfileDisplayName      = ""
 
   Identities              = @() # $IdentitiesTemplate
   Reputation              = New-Object PSObject -Property $UserRelevanceTemplate

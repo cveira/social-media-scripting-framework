@@ -303,12 +303,15 @@ function New-SMPost( [string] $schema = $SCHEMA_DEFAULT ) {
   #>
 
 
-  $SMPost                 = New-Object PSObject -Property $SNPostMap.$schema
+  $SMPost                  = New-Object PSObject -Property $SNPostMap.$schema
+
+  $SMPost.OwnerId          = $DataSetOwnerId
+  $SMPost.OwnerDisplayName = $DataSetOwnerDisplayName
 
   # Workaround to guarantee that $DefaultDateFormat is actually enforced
-  $SMPost.CreationDate    = Get-Date -format $DefaultDateFormat
-  $SMPost.LastUpdateDate  = Get-Date -format $DefaultDateFormat
-  $SMPost.RetainUntilDate = Get-Date -format $DefaultDateFormat
+  $SMPost.CreationDate     = Get-Date -format $DefaultDateFormat
+  $SMPost.LastUpdateDate   = Get-Date -format $DefaultDateFormat
+  $SMPost.RetainUntilDate  = Get-Date -format $DefaultDateFormat
 
   $SMPost
 }
@@ -333,12 +336,15 @@ function New-SMUser( [string] $schema = $SCHEMA_DEFAULT ) {
   #>
 
 
-  $SMUser                 = New-Object PSObject -Property $SNUserMap.$schema
+  $SMUser                  = New-Object PSObject -Property $SNUserMap.$schema
+
+  $SMUser.OwnerId          = $DataSetOwnerId
+  $SMUser.OwnerDisplayName = $DataSetOwnerDisplayName
 
   # Workaround to guarantee that $DefaultDateFormat is actually enforced
-  $SMUser.CreationDate    = Get-Date -format $DefaultDateFormat
-  $SMUser.LastUpdateDate  = Get-Date -format $DefaultDateFormat
-  $SMUser.RetainUntilDate = Get-Date -format $DefaultDateFormat
+  $SMUser.CreationDate     = Get-Date -format $DefaultDateFormat
+  $SMUser.LastUpdateDate   = Get-Date -format $DefaultDateFormat
+  $SMUser.RetainUntilDate  = Get-Date -format $DefaultDateFormat
 
   $SMUser
 }
@@ -363,12 +369,15 @@ function New-SMUserDigitalProfile( [string] $schema = $SCHEMA_DEFAULT ) {
   #>
 
 
-  $DigitalProfile                 = New-Object PSObject -Property $DigitalProfileMap.$schema
+  $DigitalProfile                  = New-Object PSObject -Property $DigitalProfileMap.$schema
+
+  $DigitalProfile.OwnerId          = $DataSetOwnerId
+  $DigitalProfile.OwnerDisplayName = $DataSetOwnerDisplayName
 
   # Workaround to guarantee that $DefaultDateFormat is actually enforced
-  $DigitalProfile.CreationDate    = Get-Date -format $DefaultDateFormat
-  $DigitalProfile.LastUpdateDate  = Get-Date -format $DefaultDateFormat
-  $DigitalProfile.RetainUntilDate = Get-Date -format $DefaultDateFormat
+  $DigitalProfile.CreationDate     = Get-Date -format $DefaultDateFormat
+  $DigitalProfile.LastUpdateDate   = Get-Date -format $DefaultDateFormat
+  $DigitalProfile.RetainUntilDate  = Get-Date -format $DefaultDateFormat
 
   $DigitalProfile
 }
@@ -1569,7 +1578,7 @@ function ConvertTo-PrivateUserProfileData() {
 }
 
 
-function Expand-ShortLink( [string] $link = "" ) {
+function Expand-ShortLink() {
   <#
     .SYNOPSIS
       Takes Short Link and returns both the target landing page and the HTTP code returned by that page.
@@ -1589,26 +1598,34 @@ function Expand-ShortLink( [string] $link = "" ) {
   #>
 
 
+  param(
+    [Parameter(
+       Mandatory         = $true,
+       Position          = 0,
+       ValueFromPipeline = $true,
+       HelpMessage       = 'Short Link to be expanded.'
+    )] [string] $link    = ""
+  )
+
+
   process {
     [PSObject] $ExpandedShortLink = $null
     $response                     = ""
 
-    if ( ( $_ -eq $null ) -and  ( $link -eq "" ) ) {
+    if ( ( $link -eq $null ) -or ( $link -eq "" ) ) {
       $ExpandedShortLink = New-Object PSObject -Property @{
         HttpCode         = "000"
         ExpandedUrl      = "N/A"
       }
 
       return $ExpandedShortLink
-    } else {
-      if ( $_ -ne $null ) {
-        $ShortLink       = $_
-      } else {
-        $ShortLink       = $link
-      }
     }
 
-    $response            = & $BinDir\curl.exe -sLk -w "%{http_code} %{url_effective}" --user-agent "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)" -o /dev/null "$ShortLink"
+    Write-Debug "[Expand-ShortLink] - Requested Link: $link"
+
+    $response            = & $BinDir\curl.exe -sLk -w "%{http_code} %{url_effective}" --user-agent "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)" -o /dev/null "$link"
+
+    Write-Debug "[Expand-ShortLink] - Expanded Link:  $( $response.Split(" ")[0] ) - $( $response.Split(" ")[1] )"
 
     New-Object PSObject -Property @{
       HttpCode           = $response.Split(" ")[0]
@@ -1638,6 +1655,7 @@ function Get-ShortLinks( [string] $from, [switch] $protocol, [switch] $ForceSSL 
 
   [RegEx]    $LinksPattern = "(?<ShortLink>[a-zA-Z0-9]+\.[a-zA-Z0-9]+/[a-zA-Z0-9]*)[ ]*"
   [string[]] $EmbededLinks = @()
+  [string[]] $ShortLinks   = @()
 
 
   $CurrentMatch    = $LinksPattern.Match( $from )
@@ -1647,33 +1665,41 @@ function Get-ShortLinks( [string] $from, [switch] $protocol, [switch] $ForceSSL 
   }
 
   while ($CurrentMatch.Success) {
-    $EmbededLinks += $CurrentMatch.Value
+    $EmbededLinks += $CurrentMatch.Value -replace "[\.]+$", ""
     $CurrentMatch  = $CurrentMatch.NextMatch()
   }
 
   $EmbededLinks | ForEach-Object {
+    Write-Debug "Get-ShortLinks] - Embeded Link: $_"
+    Write-Debug "Get-ShortLinks] -   Protocol:   $protocol"
+    Write-Debug "Get-ShortLinks] -   ForceSSL:   $ForceSSL"
+
     if ( $protocol ) {
       if ( $ForceSSL ) {
         if ( $_ -match "http|https" ) {
-          $_.Trim() -replace "http:","https:"
+          $ShortLinks += $_.Trim() -replace "http:","https:"
         } else {
-          "https://$_".Trim()
+          $ShortLinks += "https://$_".Trim()
         }
       } else {
         if ( $_ -match "http|https" ) {
-          $_.Trim() -replace "https:","http:"
+          $ShortLinks += $_.Trim() -replace "https:","http:"
         } else {
-          "http://$_".Trim()
+          $ShortLinks += "http://$_".Trim()
         }
       }
     } else {
       if ( $_ -match "http|https" ) {
-        $_.Trim() -replace "http://|https://",""
+        $ShortLinks += $_.Trim() -replace "http://|https://",""
       } else {
-        "$_".Trim()
+        $ShortLinks += "$_".Trim()
       }
     }
   }
+
+  Write-Debug "Get-ShortLinks] - Short Links:  $( [string] $ShortLinks )"
+
+  return $ShortLinks
 }
 
 

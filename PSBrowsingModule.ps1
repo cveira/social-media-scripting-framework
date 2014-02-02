@@ -2,8 +2,8 @@
 -------------------------------------------------------------------------------
 Name:    Social Media Scripting Framework
 Module:  Web browsing
-Version: 0.5 BETA
-Date:    2014/01/20
+Version: 0.5.1 BETA
+Date:    2014/02/02
 Author:  Carlos Veira Lorenzo
          e-mail:   cveira [at] thinkinbig [dot] org
          blog:     thinkinbig.org

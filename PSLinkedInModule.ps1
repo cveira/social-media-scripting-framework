@@ -2,8 +2,8 @@
 -------------------------------------------------------------------------------
 Name:    Social Media Scripting Framework
 Module:  LinkedIn
-Version: 0.5 BETA
-Date:    2014/01/20
+Version: 0.5.1 BETA
+Date:    2014/02/02
 Author:  Carlos Veira Lorenzo
          e-mail:   cveira [at] thinkinbig [dot] org
          blog:     thinkinbig.org
@@ -508,8 +508,9 @@ function Get-RawLINCompanyLikes( [string] $UpdateId ) {
     $ApiUrl                       = "https://api.linkedin.com/v1/companies/$($connections.LinkedIn.DefaultCompanyId)/updates/$($UpdateId):(num-likes,update-key,likes)?&oauth2_access_token=$($connections.LinkedIn.AccessToken)"
     $ApiResponse                  = & $BinDir\curl.exe -s -k -X GET $ApiUrl
 
-    Write-Debug "ApiUrl:      $ApiUrl"
-    # Write-Debug "ApiResponse: $ApiResponse"
+    Write-Debug "[Get-RawLINCompanyLikes] - Getting Company Likes"
+    Write-Debug "[Get-RawLINCompanyLikes] -   ApiUrl:      $ApiUrl"
+    # Write-Debug "[Get-RawLINCompanyLikes] -   ApiResponse: `n`n$ApiResponse"
     # $ApiResponse | Out-File -Encoding UTF8 $CurrentLogsDir\$LogFileName-CompanyLikesApiDump-$CurrentSessionId.log
 
     Update-RawLINApiQuotaStatus "ApiCompanyGetPostsDailyLimit"
@@ -618,8 +619,9 @@ function Get-RawLINCompanyComments( [string] $UpdateId ) {
     $ApiUrl                       = "https://api.linkedin.com/v1/companies/$($connections.LinkedIn.DefaultCompanyId)/updates/$($UpdateId):(updateComments)?&oauth2_access_token=$($connections.LinkedIn.AccessToken)"
     $ApiResponse                  = & $BinDir\curl.exe -s -k -X GET $ApiUrl
 
-    Write-Debug "ApiUrl:      $ApiUrl"
-    # Write-Debug "ApiResponse: $ApiResponse"
+    Write-Debug "[Get-RawLINCompanyComments] - Getting Company Comments"
+    Write-Debug "[Get-RawLINCompanyComments] -   ApiUrl:      $ApiUrl"
+    # Write-Debug "[Get-RawLINCompanyComments] -   ApiResponse: `n`n$ApiResponse"
     # $ApiResponse | Out-File -Encoding UTF8 $CurrentLogsDir\$LogFileName-CompanyCommentsApiDump-$CurrentSessionId.log
 
     Update-RawLINApiQuotaStatus "ApiCompanyGetPostsDailyLimit"
@@ -748,13 +750,16 @@ function Get-RawLINCompanyPosts( [string] $from = "", [string] $domain = "", [in
       $ApiUrl                     = "https://api.linkedin.com/v1/companies/$FromCompanyId/updates?event-type=status-update&start=0&count=$results&oauth2_access_token=$($connections.LinkedIn.AccessToken)"
       $ApiResponse                = & $BinDir\curl.exe -s -k -X GET $ApiUrl
 
-      Write-Debug "ApiUrl:      $ApiUrl"
-      # Write-Debug "ApiResponse: $ApiResponse"
+      Write-Debug "[Get-RawLINCompanyPosts] - Getting Company Posts"
+      Write-Debug "[Get-RawLINCompanyPosts] -   ApiUrl:      $ApiUrl"
+      # Write-Debug "[Get-RawLINCompanyPosts] -   ApiResponse:`n`n$ApiResponse"
       # $ApiResponse | Out-File -Encoding UTF8 $CurrentLogsDir\$LogFileName-CompanyApiDump-$CurrentSessionId.log
 
       Update-RawLINApiQuotaStatus "ApiCompanyGetPostsDailyLimit"
 
       if ( !( ( $ApiResponse -ilike "*Bad Request*" ) -and ( $ApiResponse -ilike "*error-code*" ) ) ) {
+        Write-Debug "[Get-RawLINCompanyPosts] - Company posts retrieved: $( ( [xml] $ApiResponse ).updates.update.Count )"
+
         ( [xml] $ApiResponse ).updates.update  | ForEach-Object {
           $CurrentLikes           = Get-RawLINCompanyLikes $_."update-key"
           $CurrentComments        = Get-RawLINCompanyComments $_."update-key"
@@ -911,7 +916,7 @@ function Get-RawLINGroupPosts( [string] $from = "", [int] $results = 0 ) {
     $FromGroupId                         = $connections.LinkedIn.DefaultGroupId
   } else {
     $FromGroupName                       = $from
-    $FromGroupId                         = Get-RawLINGroupIdByName $FromGroupName
+    $FromGroupId                         = ( Get-RawLINGroupIdByName $FromGroupName ).GroupId
   }
 
   if ( $FromGroupId -ne $null ) {
@@ -921,13 +926,17 @@ function Get-RawLINGroupPosts( [string] $from = "", [int] $results = 0 ) {
       $ApiUrl                            = "https://api.linkedin.com/v1/groups/$FromGroupId/posts:(id,creation-timestamp,title,summary,creator:(first-name,last-name,picture-url,headline),likes,comments,attachment:(image-url,content-domain,content-url,title,summary),relation-to-viewer)?category=discussion&order=recency&count=$results&oauth2_access_token=$($connections.LinkedIn.AccessToken)"
       $ApiResponse                       = & $BinDir\curl.exe -s -k -X GET $ApiUrl
 
-      Write-Debug "ApiUrl:      $ApiUrl"
-      # Write-Debug "ApiResponse: $ApiResponse"
+      Write-Debug "[Get-RawLINGroupPosts] - Getting Group Posts"
+      Write-Debug "[Get-RawLINGroupPosts] -   ApiUrl:      $ApiUrl"
+      # Write-Debug "[Get-RawLINGroupPosts] -   ApiResponse:`n`n$ApiResponse"
+
       # $ApiResponse | Out-File -Encoding UTF8 $CurrentLogsDir\$LogFileName-GroupsApiDump-$CurrentSessionId.log
 
       Update-RawLINApiQuotaStatus "ApiGroupGetPostDailyLimit"
 
       if ( !( ( $ApiResponse -ilike "*Bad Request*" ) -and ( $ApiResponse -ilike "*error-code*" ) ) ) {
+        Write-Debug "[Get-RawLINGroupPosts] - Group posts retrieved: $( ( [xml] $ApiResponse ).posts.post.Count )"
+
         ( [xml] $ApiResponse ).posts.post  | ForEach-Object {
           $CurrentLikes                  = $_.likes.total
           $CurrentComments               = $_.comments.total
@@ -1219,7 +1228,7 @@ function Set-RawLINTimeLineCache( [PSObject[]] $using, [string] $type = "group",
 # --------------------------------------------------------------------------------------------------
 
 
-function Get-LINTimeLine( [string] $company = "", [string] $domain = "", [string] $group = "", [int] $results = $connections.LinkedIn.DefaultResultsToReturn, [switch] $quick ) {
+function Get-LINTimeLine( [string] $company = "", [string] $domain = "", [string] $group = "", [int] $results = $connections.LinkedIn.DefaultResultsToReturn, [switch] $quick, [switch] $UseFullCache ) {
   <#
     .SYNOPSIS
       Retrieves and composes the LinkedIn Time Line from the specified Post sources.
@@ -1244,6 +1253,24 @@ function Get-LINTimeLine( [string] $company = "", [string] $domain = "", [string
   [PSObject[]] $RawTimeLine                = @()
   [PSObject[]] $CachedTimeLine             = @()
   [System.Collections.ArrayList] $TimeLine = @()
+  [string] $FullCacheFile                  = "$CurrentCacheDir\LINTimeLineCache-FullCache.xml"
+
+
+  if ( $UseFullCache ) {
+    if ( Test-Path $FullCacheFile ) {
+      [int] $CacheAge         = -( Get-ChildItem $FullCacheFile ).LastWriteTime.Subtract( $( Get-Date ) ).TotalHours
+
+      Write-Debug "[Get-LINTimeLine] - Current Full Cache Age: $CacheAge"
+
+      if ( $CacheAge -lt $connections.LinkedIn.PostsCacheExpiration ) {
+        $CachedTimeLine       = Import-CliXml $FullCacheFile
+
+        Write-Debug "[Get-LINTimeLine] - Full Cache content loaded"
+
+        return $CachedTimeLine
+      }
+    }
+  }
 
 
   if ( ( $compay -eq "" ) -and ( $group -eq "" ) -and ( $domain -eq "" ) ) {
@@ -1465,7 +1492,11 @@ function Get-LINTimeLine( [string] $company = "", [string] $domain = "", [string
     }
   }
 
-  ( $TimeLine | ForEach-Object { if ( $_ -ne $null ) { ConvertFrom-JSON $_ } else { $_ } } ) -ne $null
+  $TimeLine = ( $TimeLine | ForEach-Object { if ( $_ -ne $null ) { ConvertFrom-JSON $_ } else { $_ } } ) -ne $null
+
+  $TimeLine | Export-CliXml $FullCacheFile
+
+  $TimeLine
 
   # $DebugPreference = "SilentlyContinue"
 }
@@ -1535,11 +1566,26 @@ function ConvertTo-LINNormalizedPost( [switch] $IncludeAll, [string] $schema = $
     $NewPost.NormalizedPost.SharedTargetURLs            = @()
     $NewPost.NormalizedPost.Tags                        = @()
 
-    $NewPost.NormalizedPost.SharedLinks                += $post.ShortLink -replace "http://|https://",""
-    $NewPost.NormalizedPost.SharedLinks                += Get-ShortLinks -from $post.Title
-    $NewPost.NormalizedPost.SharedLinks                += Get-ShortLinks -from $post.PostContent
-    $NewPost.NormalizedPost.SharedLinks                 = $NewPost.NormalizedPost.SharedLinks | Select-Object -unique | ForEach-Object { "https://$_" }
+    $NewPost.NormalizedPost.SharedLinks                += Get-ShortLinks -from $post.Title       -protocol -ForceSSL
+
+    Write-Debug "[ConvertTo-LINNormalizedPost]"
+    Write-Debug "[ConvertTo-LINNormalizedPost] - SharedLinks from Title:            $( [string] $NewPost.NormalizedPost.SharedLinks )"
+    Write-Debug "[ConvertTo-LINNormalizedPost] -   SharedLinks Count:               $( $NewPost.NormalizedPost.SharedLinks.Count )"
+
+    $NewPost.NormalizedPost.SharedLinks                += Get-ShortLinks -from $post.PostContent -protocol -ForceSSL
+
+    Write-Debug "[ConvertTo-LINNormalizedPost] - SharedLinks from PostContent:      $( [string] $NewPost.NormalizedPost.SharedLinks )"
+    Write-Debug "[ConvertTo-LINNormalizedPost] -   SharedLinks Count:               $( $NewPost.NormalizedPost.SharedLinks.Count )"
+
+    $NewPost.NormalizedPost.SharedLinks                 = ( $NewPost.NormalizedPost.SharedLinks | ForEach-Object { if ( $_ -ne $null ) { $_ } } ) -replace "[\.]+$", "" | Select-Object -unique
+
+    Write-Debug "[ConvertTo-LINNormalizedPost] - SharedLinks after post processing: $( [string] $NewPost.NormalizedPost.SharedLinks )"
+    Write-Debug "[ConvertTo-LINNormalizedPost] -   SharedLinks Count:               $( $NewPost.NormalizedPost.SharedLinks.Count )"
+
     $NewPost.NormalizedPost.SharedTargetURLs           += if ( $NewPost.NormalizedPost.SharedLinks -match $LinkShorteners ) { ( $NewPost.NormalizedPost.SharedLinks | Expand-ShortLink ).ExpandedUrl } else { $NewPost.NormalizedPost.SharedLinks }
+
+    Write-Debug "[ConvertTo-LINNormalizedPost] - SharedTargetURLs:                  $( [string] $NewPost.NormalizedPost.SharedTargetURLs )"
+    Write-Debug "[ConvertTo-LINNormalizedPost]"
 
     if ( $post.message -ne $null ) {
       $post.message.Split("#")[1..$($post.message.Split("#").Count)] | ForEach-Object {
@@ -1702,9 +1748,9 @@ function Update-LINPost( [switch] $IncludeAll, [int] $results = $connnections.Li
 
     if ( $post.NormalizedPost.ChannelName -eq $CHANNEL_NAME_LINKEDIN ) {
       if ( $IncludeAll ) {
-        $UpdatedTimeLine                 = Get-LINTimeLine -results $results
+        $UpdatedTimeLine                 = Get-LINTimeLine -results $results -UseFullCache
       } else {
-        $UpdatedTimeLine                 = Get-LINTimeLine -results $results -quick
+        $UpdatedTimeLine                 = Get-LINTimeLine -results $results -quick -UseFullCache
       }
 
       if ( $SearchByPermalink ) {
