@@ -58,7 +58,7 @@ $ConsoleHeader = @"
   Social Media Scripting Console
   Carlos Veira Lorenzo - [http://thinkinbig.org]
   ----------------------------------------------------------------------------------------------
-  Social Media Scripting Framework v0.5b BETA
+  Social Media Scripting Framework v0.5.1 BETA
   Copyright (C) 2014 Carlos Veira Lorenzo.
   This software come with ABSOLUTELY NO WARRANTY. This is free software under a GPL 2.0 license.
   ----------------------------------------------------------------------------------------------
