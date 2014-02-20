@@ -3,7 +3,7 @@
 Name:    Social Media Scripting Framework
 Module:  Feed Module
 Version: 0.5.1 BETA
-Date:    2014/02/02
+Date:    2014/02/20
 Author:  Carlos Veira Lorenzo
          e-mail:   cveira [at] thinkinbig [dot] org
          blog:     thinkinbig.org
@@ -945,6 +945,8 @@ function Get-FeedTimeLine( [string] $from = $connections.Feeds.DefaultFeedSource
 
   # $DebugPreference = "Continue"
 
+  $LogFileName                             = "FeedModule"
+
   [PSObject[]] $RawTimeLine                = @()
   [System.Collections.ArrayList] $TimeLine = @()
 
@@ -963,7 +965,14 @@ function Get-FeedTimeLine( [string] $from = $connections.Feeds.DefaultFeedSource
 
       $NormalizedPost  = $post | ConvertTo-FeedNormalizedPost
 
-      $TimeLine.Add( $( $NormalizedPost | ConvertTo-JSON -Compress ) ) | Out-Null
+      try {
+        $TimeLine.Add( $( $NormalizedPost | ConvertTo-JSON -Compress ) ) | Out-Null
+      } catch {
+        "$(get-date -format u) [Get-FeedTimeLine] - Unexpected error when adding post to the Time Line"          >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+        "$(get-date -format u) [Get-FeedTimeLine] -   NormalizedPost: `r`n $( $NormalizedPost | Format-Custom )" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+        Write-Debug "[Get-FeedTimeLine] - Unexpected error when adding post to the Time Line"
+      }
 
       $ExecutionTime.Stop()
 
@@ -981,7 +990,14 @@ function Get-FeedTimeLine( [string] $from = $connections.Feeds.DefaultFeedSource
 
       $NormalizedPost  = $post | ConvertTo-FeedNormalizedPost -IncludeAll
 
-      $TimeLine.Add( $( $NormalizedPost | ConvertTo-JSON -Compress ) ) | Out-Null
+      try {
+        $TimeLine.Add( $( $NormalizedPost | ConvertTo-JSON -Compress ) ) | Out-Null
+      } catch {
+        "$(get-date -format u) [Get-FeedTimeLine] - Unexpected error when adding post to the Time Line"          >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+        "$(get-date -format u) [Get-FeedTimeLine] -   NormalizedPost: `r`n $( $NormalizedPost | Format-Custom )" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+        Write-Debug "[Get-FeedTimeLine] - Unexpected error when adding post to the Time Line"
+      }
 
       $ExecutionTime.Stop()
 
@@ -1131,6 +1147,8 @@ function Update-FeedPosts( [PSObject[]] $from ) {
   #>
 
 
+  $LogFileName                                 = "FeedModule"
+
   [System.Collections.ArrayList] $UpdatedPosts = @()
 
   $i               = 1
@@ -1144,9 +1162,18 @@ function Update-FeedPosts( [PSObject[]] $from ) {
     Write-Debug "[Update-FeedPosts] - TotalElements:       $($from.Count)"
     Write-Debug "[Update-FeedPosts] - ElapsedMinutes:      $($ExecutionTime.Elapsed.TotalMinutes)"
 
-    $ExecutionTime = [Diagnostics.Stopwatch]::StartNew()
+    $ExecutionTime  = [Diagnostics.Stopwatch]::StartNew()
 
-    $UpdatedPosts.Add( $( $post | Update-FeedPost -IncludeAll | ConvertTo-JSON ) ) | Out-Null
+    $NormalizedPost = $post | Update-FeedPost -IncludeAll
+
+    try {
+      $UpdatedPosts.Add( $( $NormalizedPost | ConvertTo-JSON -compress ) ) | Out-Null
+    } catch {
+      "$(get-date -format u) [Update-FeedPosts] - Unexpected error when adding post to the Time Line"          >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+      "$(get-date -format u) [Update-FeedPosts] -   NormalizedPost: `r`n $( $NormalizedPost | Format-Custom )" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+      Write-Debug "[Update-FeedPosts] - Unexpected error when adding post to the Time Line"
+    }
 
     $ExecutionTime.Stop()
 

@@ -3,7 +3,7 @@
 Name:    Social Media Scripting Framework
 Module:  Twitter
 Version: 0.5.1 BETA
-Date:    2014/02/02
+Date:    2014/02/20
 Author:  Carlos Veira Lorenzo
          e-mail:   cveira [at] thinkinbig [dot] org
          blog:     thinkinbig.org
@@ -1773,7 +1773,14 @@ function Get-TwFollowers( [string] $from ) {
 
     $NormalizedUser       = $user | ConvertTo-TwNormalizedUserProfileData
 
-    $followers.Add( $( $NormalizedUser | ConvertTo-JSON ) ) | Out-Null
+    try {
+      $followers.Add( $( $NormalizedUser | ConvertTo-JSON -Compress ) ) | Out-Null
+    } catch {
+      "$(get-date -format u) [Get-TwFollowers] - Unexpected error when adding user to the list"               >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+      "$(get-date -format u) [Get-TwFollowers] -   NormalizedUser: `r`n $( $NormalizedUser | Format-Custom )" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+      Write-Debug "[Get-TwFollowers] - Unexpected error when adding user to the list"
+    }
 
     $ExecutionTime.Stop()
 
@@ -1910,9 +1917,18 @@ function Update-TwUsersProfileData( [PSObject[]] $from ) {
     Write-Debug "[INFO] TotalUsers:          $($from.Count)"
     Write-Debug "[INFO] ElapsedMinutes:      $($ExecutionTime.Elapsed.TotalMinutes)"
 
-    $ExecutionTime = [Diagnostics.Stopwatch]::StartNew()
+    $ExecutionTime  = [Diagnostics.Stopwatch]::StartNew()
 
-    $UpdatedUsers.Add( $( $user | Update-TwUserProfileData | ConvertTo-JSON ) ) | Out-Null
+    $NormalizedUser = $user | Update-TwUserProfileData
+
+    try {
+      $UpdatedUsers.Add( $( $NormalizedUser | ConvertTo-JSON -Compress ) ) | Out-Null
+    } catch {
+      "$(get-date -format u) [Update-TwUsersProfileData] - Unexpected error when adding user to the list"               >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+      "$(get-date -format u) [Update-TwUsersProfileData] -   NormalizedUser: `r`n $( $NormalizedUser | Format-Custom )" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+      Write-Debug "[Update-TwUsersProfileData] - Unexpected error when adding user to the list"
+    }
 
     $ExecutionTime.Stop()
 
@@ -2126,6 +2142,10 @@ function Get-TwTimeLine( [string] $name, [int] $results = $connections.Twitter.D
     $tweets            = $tweets[0..( $results - 1 )]
   }
 
+  Write-Debug "[Get-TwTimeLine]"
+  Write-Debug "[Get-TwTimeLine] - Retrieved Tweets:    $($tweets.Count)"
+  Write-Debug "[Get-TwTimeLine]"
+
   if ( $quick ) {
     $i                 = 1
     $ExecutionTime     = [Diagnostics.Stopwatch]::StartNew()
@@ -2138,7 +2158,14 @@ function Get-TwTimeLine( [string] $name, [int] $results = $connections.Twitter.D
 
       $NormalizedPost  = $tweet | ConvertTo-TwNormalizedPost
 
-      $TimeLine.Add( $( $NormalizedPost | ConvertTo-JSON ) ) | Out-Null
+      try {
+        $TimeLine.Add( $( $NormalizedPost | ConvertTo-JSON -Compress ) ) | Out-Null
+      } catch {
+        "$(get-date -format u) [Get-TwTimeLine] - Unexpected error when adding post to the Time Line"          >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+        "$(get-date -format u) [Get-TwTimeLine] -   NormalizedPost: `r`n $( $NormalizedPost | Format-Custom )" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+        Write-Debug "[Get-TwTimeLine] - Unexpected error when adding post to the Time Line"
+      }
 
       $ExecutionTime.Stop()
 
@@ -2156,7 +2183,14 @@ function Get-TwTimeLine( [string] $name, [int] $results = $connections.Twitter.D
 
       $NormalizedPost  = $tweet | ConvertTo-TwNormalizedPost -IncludeAll
 
-      $TimeLine.Add( $( $NormalizedPost | ConvertTo-JSON ) ) | Out-Null
+      try {
+        $TimeLine.Add( $( $NormalizedPost | ConvertTo-JSON -Compress ) ) | Out-Null
+      } catch {
+        "$(get-date -format u) [Get-TwTimeLine] - Unexpected error when adding post to the Time Line"          >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+        "$(get-date -format u) [Get-TwTimeLine] -   NormalizedPost: `r`n $( $NormalizedPost | Format-Custom )" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+        Write-Debug "[Get-TwTimeLine] - Unexpected error when adding post to the Time Line"
+      }
 
       $ExecutionTime.Stop()
 
@@ -2268,6 +2302,9 @@ function ConvertTo-TwNormalizedPost( [switch] $IncludeAll, [string] $schema = $S
 
     if ( $IncludeLinkMetrics ) {
       if ( $NewTweet.NormalizedPost.SharedLinks -gt 0 ) {
+        $NewTweet.NormalizedPost.ClickThroughsCount      = 0
+        $NewTweet.NormalizedPost.InteractionsCount       = 0
+
         $NewTweet.NormalizedPost.SharedLinks | ForEach-Object {
           if ( $_ -like "*bit*" ) {
             $LinkGlobalMetrics                           = Get-BLLinkGlobalMetrics $_
@@ -2404,11 +2441,12 @@ function Update-TwPosts( [PSObject[]] $from ) {
       N/A
   #>
 
+  $LogFileName       = "TwitterModule"
 
   [System.Collections.ArrayList] $UpdatedPosts = @()
 
-  $i               = 1
-  $ExecutionTime   = [Diagnostics.Stopwatch]::StartNew()
+  $i                 = 1
+  $ExecutionTime     = [Diagnostics.Stopwatch]::StartNew()
   $ExecutionTime.Stop()
 
   foreach ( $post in $from ) {
@@ -2418,9 +2456,18 @@ function Update-TwPosts( [PSObject[]] $from ) {
     Write-Debug "[Update-TwPosts] - TotalUsers:          $($from.Count)"
     Write-Debug "[Update-TwPosts] - Retrieved Tweets:    $($ExecutionTime.Elapsed.TotalMinutes)"
 
-    $ExecutionTime = [Diagnostics.Stopwatch]::StartNew()
+    $ExecutionTime   = [Diagnostics.Stopwatch]::StartNew()
 
-    $UpdatedPosts.Add( $( $post | Update-TwPost -IncludeAll | ConvertTo-JSON ) ) | Out-Null
+    $NormalizedPost  = $post | Update-TwPost -IncludeAll
+
+    try {
+      $UpdatedPosts.Add( $( $NormalizedPost | ConvertTo-JSON -Compress ) ) | Out-Null
+    } catch {
+      "$(get-date -format u) [Update-TwPosts] - Unexpected error when adding post to the Time Line"          >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+      "$(get-date -format u) [Update-TwPosts] -   NormalizedPost: `r`n $( $NormalizedPost | Format-Custom )" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+      Write-Debug "[Update-TwPosts] - Unexpected error when adding post to the Time Line"
+    }
 
     $ExecutionTime.Stop()
 
@@ -2443,9 +2490,7 @@ function Update-TwPost( [switch] $IncludeAll, [string] $schema = $SCHEMA_DEFAULT
       $UpdatedTwitterPost     = $NormalizedTwitterPost     | Update-TwPost -IncludeAll
       $UpdatedTwitterTimeLine = $NormalizedTwitterTimeLine | Update-TwPost -IncludeAll
 
-      $UpdatedTwitterPost     = $PermaLink                       $UpdatedTwitterFollowers = Update-TwUserProfileData -from $followers
-      $UpdatedTwitterFollowers = Update-TwUserProfileData -from $followers
-| Update-TwPost -IncludeAll
+      $UpdatedTwitterPost     = $PermaLink                 | Update-TwPost -IncludeAll
       $UpdatedTwitterTimeLine = $PermaLinksList            | Update-TwPost -IncludeAll
 
     .NOTES
@@ -2664,7 +2709,14 @@ function Search-TwPosts( [string] $query, [int] $results = $connections.Twitter.
 
       $NormalizedPost  = $tweet | ConvertTo-TwNormalizedPost
 
-      $TimeLine.Add( $( $NormalizedPost | ConvertTo-JSON ) ) | Out-Null
+      try {
+        $TimeLine.Add( $( $NormalizedPost | ConvertTo-JSON -Compress ) ) | Out-Null
+      } catch {
+        "$(get-date -format u) [Search-TwPosts] - Unexpected error when adding post to the Time Line"          >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+        "$(get-date -format u) [Search-TwPosts] -   NormalizedPost: `r`n $( $NormalizedPost | Format-Custom )" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+        Write-Debug "[Search-TwPosts] - Unexpected error when adding post to the Time Line"
+      }
 
       $ExecutionTime.Stop()
 
@@ -2682,7 +2734,14 @@ function Search-TwPosts( [string] $query, [int] $results = $connections.Twitter.
 
       $NormalizedPost  = $tweet | ConvertTo-TwNormalizedPost -IncludeAll
 
-      $TimeLine.Add( $( $NormalizedPost | ConvertTo-JSON ) ) | Out-Null
+      try {
+        $TimeLine.Add( $( $NormalizedPost | ConvertTo-JSON -Compress ) ) | Out-Null
+      } catch {
+        "$(get-date -format u) [Search-TwPosts] - Unexpected error when adding post to the Time Line"          >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+        "$(get-date -format u) [Search-TwPosts] -   NormalizedPost: `r`n $( $NormalizedPost | Format-Custom )" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+        Write-Debug "[Search-TwPosts] - Unexpected error when adding post to the Time Line"
+      }
 
       $ExecutionTime.Stop()
 

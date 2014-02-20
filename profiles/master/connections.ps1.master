@@ -56,6 +56,12 @@ $channels = @"
     "UserSecret"                         : "<UserSecret>",
     "AuthenticationEndpoint"             : "https://www.linkedin.com/uas/oauth2/authorization",
     "AuthorizationEndpoint"              : "https://www.linkedin.com/uas/oauth2/accessToken?grant_type=authorization_code",
+    "UserProfileCacheExpirationDays"     : 30,
+    "CompanyLikesCacheExpirationDays"    : 1,
+    "CompanyCommentsCacheExpirationDays" : 1,
+    "CompanyPostsCacheExpirationMinutes" : 15,
+    "PostsCacheExpiration"               : 24,
+    "PermaLinkCacheExpirationDays"       : 30,
     "PrivacyLevel"                       : $PRIVACY_LEVEL_NONE,
     "DataRetention"                      : 365,
     "ApiDelay"                           : 0,
@@ -90,7 +96,14 @@ $channels = @"
 
     "TimeOut"              : 180000,
     "PrivacyLevel"         : $PRIVACY_LEVEL_NONE,
-    "ApiDelay"             : 0
+    "ApiDelay"             : 0,
+    "LinkCacheExpiration"  : 24
+  },
+
+  "ShortLinks" : {
+    "TimeOut"                 : 180000,
+    "ApiDelay"                : 0,
+    "LinkCacheExpirationDays" : 30
   }
 }
 "@

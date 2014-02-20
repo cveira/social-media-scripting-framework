@@ -182,13 +182,14 @@ function Set-SMProfile( [string] $name = "" ) {
 
     if ( $connections.Facebook.AccessToken -ne '<AccessToken>' ) {
       $connections.Facebook.connection = New-FBConnection -AccessToken $connections.Facebook.AccessToken
+      $connections.Facebook.connection = New-FBConnection -PageId      $connections.Facebook.DefaultPageId
     }
 
     Write-Host -foregroundcolor $COLOR_BRIGHT "done"
 
     Write-Host -foregroundcolor $COLOR_NORMAL -noNewLine "  + Creating a Session Environment... "
 
-    . Initialize-RawLINApiQuotaStatus
+    Initialize-RawLINApiQuotaStatus
 
     Remove-SMSessionStores -EmptyOnly
 
@@ -1611,6 +1612,8 @@ function Expand-ShortLink() {
   process {
     [PSObject] $ExpandedShortLink = $null
     $response                     = ""
+    [string] $CacheFile           = "$CurrentCacheDir\ExpandedLinks\ExpandedLinkCache-$( $link.Split("/")[2] -replace '\.','' )-$( $link.Split("/")[3].Trim() ).txt"
+
 
     if ( ( $link -eq $null ) -or ( $link -eq "" ) ) {
       $ExpandedShortLink = New-Object PSObject -Property @{
@@ -1623,7 +1626,30 @@ function Expand-ShortLink() {
 
     Write-Debug "[Expand-ShortLink] - Requested Link: $link"
 
-    $response            = & $BinDir\curl.exe -sLk -w "%{http_code} %{url_effective}" --user-agent "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)" -o /dev/null "$link"
+    if ( Test-Path $CacheFile ) {
+      [int] $CacheAge    = -( Get-ChildItem $CacheFile ).LastWriteTime.Subtract( $( Get-Date ) ).TotalDays
+
+      Write-Debug "[Expand-ShortLink] - Current Cache Age: $CacheAge"
+
+      if ( $CacheAge -lt $connections.ShortLinks.LinkCacheExpirationDays ) {
+        $response     = Get-Content $CacheFile -encoding UTF8
+
+        Write-Debug "[Expand-ShortLink] - Expanded Link loaded from Cache."
+      } else {
+        Write-Debug "[Expand-ShortLink] - Expanding Short Link."
+
+        $response        = & $BinDir\curl.exe -sLk -w "%{http_code} %{url_effective}" --user-agent "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)" -o /dev/null "$link"
+
+        $response | Out-File -FilePath $CacheFile -encoding UTF8 -force
+      }
+    } else {
+      Write-Debug "[Expand-ShortLink] - Expanding Short Link."
+
+      $response          = & $BinDir\curl.exe -sLk -w "%{http_code} %{url_effective}" --user-agent "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)" -o /dev/null "$link"
+
+      $response | Out-File -FilePath $CacheFile -encoding UTF8 -force
+    }
+
 
     Write-Debug "[Expand-ShortLink] - Expanded Link:  $( $response.Split(" ")[0] ) - $( $response.Split(" ")[1] )"
 
@@ -1670,9 +1696,9 @@ function Get-ShortLinks( [string] $from, [switch] $protocol, [switch] $ForceSSL 
   }
 
   $EmbededLinks | ForEach-Object {
-    Write-Debug "Get-ShortLinks] - Embeded Link: $_"
-    Write-Debug "Get-ShortLinks] -   Protocol:   $protocol"
-    Write-Debug "Get-ShortLinks] -   ForceSSL:   $ForceSSL"
+    Write-Debug "[Get-ShortLinks] - Embeded Link: $_"
+    Write-Debug "[Get-ShortLinks] -   Protocol:   $protocol"
+    Write-Debug "[Get-ShortLinks] -   ForceSSL:   $ForceSSL"
 
     if ( $protocol ) {
       if ( $ForceSSL ) {
@@ -1697,7 +1723,7 @@ function Get-ShortLinks( [string] $from, [switch] $protocol, [switch] $ForceSSL 
     }
   }
 
-  Write-Debug "Get-ShortLinks] - Short Links:  $( [string] $ShortLinks )"
+  Write-Debug "[Get-ShortLinks] - Short Links:  $( [string] $ShortLinks )"
 
   return $ShortLinks
 }
@@ -1746,5 +1772,63 @@ function Get-RawNormalizedPropertyName( [string] $Name ) {
     Write-Debug "[Get-RawNormalizedPropertyName] - Unable to normalize name: $Name"
 
     return $null
+  }
+}
+
+
+function Compress-TimeLine {
+  <#
+    .SYNOPSIS
+      Takes a collection of Normalized posts and removes redundant instances of the same post. Only the most recent instance gets returned.
+
+    .DESCRIPTION
+      Takes a collection of Normalized posts and removes redundant instances of the same post. Only the most recent instance gets returned.
+
+    .EXAMPLE
+      $CompressedTimeLine = $NormalizedTimeLine | Compress-TimeLine
+
+    .NOTES
+      High-level function.
+
+    .LINK
+      N/A
+  #>
+
+
+  param(
+    [Parameter(
+       Mandatory         = $true,
+       Position          = 0,
+       ValueFromPipeline = $true,
+       HelpMessage       = 'Normalized Time Line.'
+    )] [PSObject] $from
+  )
+
+
+  begin {
+    $BlackList                                         = @{}
+    [System.Collections.ArrayList] $CompressedTimeLine = @()
+  }
+
+
+  process {
+    $from | Sort-Object LastUpdateDate -descending | ForEach-Object {
+      if ( $_.NormalizedPost.PostId -ne $null ) {
+        if ( !( $BlackList.ContainsKey("$( $_.NormalizedPost.PostId )") ) ) {
+          $BlackList.Add( $( $_.NormalizedPost.PostId ), $( $_.NormalizedPost.PostDigest ) )
+
+          $CompressedTimeLine.Add( $( $_ | ConvertTo-JSON -compress ) ) | Out-Null
+        } else {
+          Write-Debug "[Compress-TimeLine] - Skipping post. A more recent instance already exist."
+        }
+      } else {
+        Write-Debug "[Compress-TimeLine] - Skipping post. PostId is null."
+      }
+    }
+  }
+
+
+  end {
+    $CompressedTimeLine | ForEach-Object { if ( $_ -ne $null ) { ConvertFrom-JSON $_ } }
   }
 }

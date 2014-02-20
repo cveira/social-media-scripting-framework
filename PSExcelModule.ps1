@@ -3,7 +3,7 @@
 Name:    Social Media Scripting Framework
 Module:  Microsoft Excel
 Version: 0.5.1 BETA
-Date:    2014/02/02
+Date:    2014/02/20
 Author:  Carlos Veira Lorenzo
          e-mail:   cveira [at] thinkinbig [dot] org
          blog:     thinkinbig.org

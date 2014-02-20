@@ -3,7 +3,7 @@
 Name:    Social Media Scripting Framework
 Module:  Facebook
 Version: 0.5.1 BETA
-Date:    2014/02/02
+Date:    2014/02/20
 Author:  Carlos Veira Lorenzo
          e-mail:   cveira [at] thinkinbig [dot] org
          blog:     thinkinbig.org
@@ -288,6 +288,8 @@ function Get-FBTimeLine( [switch] $quick ) {
 
   # $DebugPreference = "Continue"
 
+  $LogFileName                             = "FacebookModule"
+
   [PSObject[]] $RawTimeLine                = @()
   [System.Collections.ArrayList] $TimeLine = @()
 
@@ -307,7 +309,14 @@ function Get-FBTimeLine( [switch] $quick ) {
 
       $NormalizedPost  = $post | ConvertTo-FBNormalizedPost
 
-      $TimeLine.Add( $( $NormalizedPost | ConvertTo-JSON -Compress ) ) | Out-Null
+      try {
+        $TimeLine.Add( $( $NormalizedPost | ConvertTo-JSON -Compress ) ) | Out-Null
+      } catch {
+        "$(get-date -format u) [Get-FBTimeLine] - Unexpected error when adding post to the Time Line"          >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+        "$(get-date -format u) [Get-FBTimeLine] -   NormalizedPost: `r`n $( $NormalizedPost | Format-Custom )" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+        Write-Debug "[Get-FBTimeLine] - Unexpected error when adding post to the Time Line"
+      }
 
       $ExecutionTime.Stop()
 
@@ -325,7 +334,14 @@ function Get-FBTimeLine( [switch] $quick ) {
 
       $NormalizedPost  = $post | ConvertTo-FBNormalizedPost -IncludeAll
 
-      $TimeLine.Add( $( $NormalizedPost | ConvertTo-JSON -Compress ) ) | Out-Null
+      try {
+        $TimeLine.Add( $( $NormalizedPost | ConvertTo-JSON -Compress ) ) | Out-Null
+      } catch {
+        "$(get-date -format u) [Get-FBTimeLine] - Unexpected error when adding post to the Time Line"          >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+        "$(get-date -format u) [Get-FBTimeLine] -   NormalizedPost: `r`n $( $NormalizedPost | Format-Custom )" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+        Write-Debug "[Get-FBTimeLine] - Unexpected error when adding post to the Time Line"
+      }
 
       $ExecutionTime.Stop()
 
@@ -443,6 +459,9 @@ function ConvertTo-FBNormalizedPost( [switch] $IncludeAll, [string] $schema = $S
 
     if ( $IncludeLinkMetrics ) {
       if ( $NewPost.NormalizedPost.SharedLinks -gt 0 ) {
+        $NewPost.NormalizedPost.ClickThroughsCount      = 0
+        $NewPost.NormalizedPost.InteractionsCount       = 0
+      
         $NewPost.NormalizedPost.SharedLinks | ForEach-Object {
           if ( $_ -like "*bit*" ) {
             $LinkGlobalMetrics                          = Get-BLLinkGlobalMetrics $_
@@ -538,6 +557,7 @@ function Update-FBPosts( [PSObject[]] $from ) {
       N/A
   #>
 
+  $LogFileName                                 = "FacebookModule"
 
   [System.Collections.ArrayList] $UpdatedPosts = @()
 
@@ -552,9 +572,18 @@ function Update-FBPosts( [PSObject[]] $from ) {
     Write-Debug "[Update-FBPosts] - TotalElements:       $($from.Count)"
     Write-Debug "[Update-FBPosts] - ElapsedMinutes:      $($ExecutionTime.Elapsed.TotalMinutes)"
 
-    $ExecutionTime = [Diagnostics.Stopwatch]::StartNew()
+    $ExecutionTime  = [Diagnostics.Stopwatch]::StartNew()
 
-    $UpdatedPosts.Add( $( $post | Update-FBPost -IncludeAll | ConvertTo-JSON ) ) | Out-Null
+    $NormalizedPost = $post | Update-FBPost -IncludeAll
+
+    try {
+      $UpdatedPosts.Add( $( $NormalizedPost | ConvertTo-JSON -compress ) ) | Out-Null
+    } catch {
+      "$(get-date -format u) [Update-FBPosts] - Unexpected error when adding post to the Time Line"          >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+      "$(get-date -format u) [Update-FBPosts] -   NormalizedPost: `r`n $( $NormalizedPost | Format-Custom )" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+      Write-Debug "[Update-FBPosts] - Unexpected error when adding post to the Time Line"
+    }
 
     $ExecutionTime.Stop()
 

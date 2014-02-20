@@ -3,7 +3,7 @@
 Name:    Social Media Scripting Framework
 Module:  Bitly.com
 Version: 0.5.1 BETA
-Date:    2014/02/02
+Date:    2014/02/20
 Author:  Carlos Veira Lorenzo
          e-mail:   cveira [at] thinkinbig [dot] org
          blog:     thinkinbig.org
@@ -105,7 +105,7 @@ function Get-BLOAuthToken ( [string] $UserName, [string] $Password ) {
 }
 
 
-function Get-BLLinkMetrics ( [string] $link, [switch] $IncludeAll) {
+function Get-BLLinkMetrics( [string] $link, [switch] $IncludeAll ) {
   <#
     .SYNOPSIS
       Retrieves all the Track & Trace information associated to a given Bit.ly link.
@@ -126,76 +126,116 @@ function Get-BLLinkMetrics ( [string] $link, [switch] $IncludeAll) {
       http://dev.bitly.com/link_metrics.html
   #>
 
+
+  function Get-RawBLLinkMetrics( [string] $link, [switch] $IncludeAll ) {
+    Write-Debug "[Get-BLLinkMetrics] Getting Metrics for Clicks"
+    Write-Debug "[Get-BLLinkMetrics]   API Call: https://api-ssl.bitly.com/v3/link/clicks?access_token=$( $connections.BitLy.AccessToken )&link=$( EscapeDataStringRfc3986 $link )"
+
+    $clicks                = ( & $BinDir\curl.exe -s -k -X GET $("https://api-ssl.bitly.com/v3/link/clicks?access_token=" + $connections.BitLy.AccessToken + "&link=" + $( EscapeDataStringRfc3986 $link )) | ConvertFrom-JSON ).data
+
+    Start-Sleep -Seconds $connections.BitLy.ApiDelay
+
+    Write-Debug "[Get-BLLinkMetrics] Getting Metrics for Countries"
+    Write-Debug "[Get-BLLinkMetrics]   API Call: https://api-ssl.bitly.com/v3/link/countries?access_token=$( $connections.BitLy.AccessToken )&link=$( EscapeDataStringRfc3986 $link )"
+
+    $countries             = ( & $BinDir\curl.exe -s -k -X GET $("https://api-ssl.bitly.com/v3/link/countries?access_token=" + $connections.BitLy.AccessToken + "&link=" + $( EscapeDataStringRfc3986 $link )) | ConvertFrom-JSON ).data
+
+    Start-Sleep -Seconds $connections.BitLy.ApiDelay
+
+    Write-Debug "[Get-BLLinkMetrics] Getting Metrics for Referring Domains"
+    Write-Debug "[Get-BLLinkMetrics]   API Call: https://api-ssl.bitly.com/v3/link/referring_domains?access_token=$( $connections.BitLy.AccessToken )&link=$( EscapeDataStringRfc3986 $link )"
+
+    $referring_domains     = ( & $BinDir\curl.exe -s -k -X GET $("https://api-ssl.bitly.com/v3/link/referring_domains?access_token=" + $connections.BitLy.AccessToken + "&link=" + $( EscapeDataStringRfc3986 $link )) | ConvertFrom-JSON ).data
+
+    Start-Sleep -Seconds $connections.BitLy.ApiDelay
+
+    Write-Debug "[Get-BLLinkMetrics] Getting related ShortLinks"
+    Write-Debug "[Get-BLLinkMetrics]   API Call: https://api-ssl.bitly.com/v3/link/encoders?access_token=$( $connections.BitLy.AccessToken )&link=$( EscapeDataStringRfc3986 $link )"
+
+    $encoders              = ( & $BinDir\curl.exe -s -k -X GET $("https://api-ssl.bitly.com/v3/link/encoders?access_token=" + $connections.BitLy.AccessToken + "&link=" + $( EscapeDataStringRfc3986 $link )) | ConvertFrom-JSON ).data
+
+    Start-Sleep -Seconds $connections.BitLy.ApiDelay
+
+    Write-Debug "[Get-BLLinkMetrics] Getting Metrics for Shares"
+    Write-Debug "[Get-BLLinkMetrics]   API Call: https://api-ssl.bitly.com/v3/link/shares?access_token=$( $connections.BitLy.AccessToken )&link=$( EscapeDataStringRfc3986 $link )"
+
+    $shares                = ( & $BinDir\curl.exe -s -k -X GET $("https://api-ssl.bitly.com/v3/link/shares?access_token=" + $connections.BitLy.AccessToken + "&link=" + $( EscapeDataStringRfc3986 $link )) | ConvertFrom-JSON ).data
+
+
+    if ( $IncludeAll ) {
+      Write-Debug "[Get-BLLinkMetrics] Getting Metrics for Referrers"
+      Write-Debug "[Get-BLLinkMetrics]   API Call: https://api-ssl.bitly.com/v3/link/referrers?access_token=$( $connections.BitLy.AccessToken )&link=$( EscapeDataStringRfc3986 $link )"
+
+      $referrers           = ( & $BinDir\curl.exe -s -k -X GET $("https://api-ssl.bitly.com/v3/link/referrers?access_token=" + $connections.BitLy.AccessToken + "&link=" + $( EscapeDataStringRfc3986 $link )) | ConvertFrom-JSON ).data
+
+      Start-Sleep -Seconds $connections.BitLy.ApiDelay
+
+      Write-Debug "[Get-BLLinkMetrics] Getting Metrics for Referrers by Domain"
+      Write-Debug "[Get-BLLinkMetrics]   API Call: https://api-ssl.bitly.com/v3/link/referrers_by_domain?access_token=$( $connections.BitLy.AccessToken )&link=$( EscapeDataStringRfc3986 $link )"
+
+      $referrers_by_domain = ( & $BinDir\curl.exe -s -k -X GET $("https://api-ssl.bitly.com/v3/link/referrers_by_domain?access_token=" + $connections.BitLy.AccessToken + "&link=" + $( EscapeDataStringRfc3986 $link )) | ConvertFrom-JSON ).data
+
+      Start-Sleep -Seconds $connections.BitLy.ApiDelay
+
+      Write-Debug "[Get-BLLinkMetrics] Getting Metrics for related ShortLinks"
+      Write-Debug "[Get-BLLinkMetrics]   API Call: https://api-ssl.bitly.com/v3/link/encoders_count?access_token=$( $connections.BitLy.AccessToken )&link=$( EscapeDataStringRfc3986 $link )"
+
+      $encoders_count      = ( & $BinDir\curl.exe -s -k -X GET $("https://api-ssl.bitly.com/v3/link/encoders_count?access_token=" + $connections.BitLy.AccessToken + "&link=" + $( EscapeDataStringRfc3986 $link )) | ConvertFrom-JSON ).data
+    }
+
+
+    New-Object PSObject -Property @{
+      Clicks            = $clicks
+      Countries         = $countries
+      Referrers         = $referrers
+      ReferrersByDomain = $referrers_by_domain
+      ReferringDomains  = $referring_domains
+      Encoders          = $encoders
+      EncodersCount     = $encoders_count
+      Shares            = $shares
+    }
+  }
+
+
   $link = $link -replace "\+/global",""
   $link = $link -replace "\+",""
   $link = $link -replace "http://","https://"
 
-  Write-Debug "[Get-BLLinkMetrics] Getting Metrics for Clicks"
-  Write-Debug "[Get-BLLinkMetrics]   API Call: https://api-ssl.bitly.com/v3/link/clicks?access_token=$( $connections.BitLy.AccessToken )&link=$( EscapeDataStringRfc3986 $link )"
+  [string] $CacheFile  = "$CurrentCacheDir\bitly\BLLinkCache-$( $link.Split("/")[3].Trim() ).xml"
 
-  $clicks                = ( & $BinDir\curl.exe -s -k -X GET $("https://api-ssl.bitly.com/v3/link/clicks?access_token=" + $connections.BitLy.AccessToken + "&link=" + $( EscapeDataStringRfc3986 $link )) | ConvertFrom-JSON ).data
+  if ( Test-Path $CacheFile ) {
+    [int] $CacheAge    = -( Get-ChildItem $CacheFile ).LastWriteTime.Subtract( $( Get-Date ) ).TotalHours
 
-  Start-Sleep -Seconds $connections.BitLy.ApiDelay
+    Write-Debug "[Get-BLLinkMetrics] - Current Cache Age: $CacheAge"
 
-  Write-Debug "[Get-BLLinkMetrics] Getting Metrics for Countries"
-  Write-Debug "[Get-BLLinkMetrics]   API Call: https://api-ssl.bitly.com/v3/link/countries?access_token=$( $connections.BitLy.AccessToken )&link=$( EscapeDataStringRfc3986 $link )"
+    if ( $CacheAge -lt $connections.BitLy.LinkCacheExpiration ) {
+      $ApiResponse     = Import-CliXml $CacheFile
 
-  $countries             = ( & $BinDir\curl.exe -s -k -X GET $("https://api-ssl.bitly.com/v3/link/countries?access_token=" + $connections.BitLy.AccessToken + "&link=" + $( EscapeDataStringRfc3986 $link )) | ConvertFrom-JSON ).data
+      Write-Debug "[Get-BLLinkMetrics] - Link Metrics loaded from Cache."
+    } else {
+      Write-Debug "[Get-BLLinkMetrics] - Loading Link Metrics from API."
 
-  Start-Sleep -Seconds $connections.BitLy.ApiDelay
+      if ( $IncludeAll ) {
+        $ApiResponse   = Get-RawBLLinkMetrics -link $link -IncludeAll
+      } else {
+        $ApiResponse   = Get-RawBLLinkMetrics -link $link
+      }
 
-  Write-Debug "[Get-BLLinkMetrics] Getting Metrics for Referring Domains"
-  Write-Debug "[Get-BLLinkMetrics]   API Call: https://api-ssl.bitly.com/v3/link/referring_domains?access_token=$( $connections.BitLy.AccessToken )&link=$( EscapeDataStringRfc3986 $link )"
+      $ApiResponse | Export-CliXml $CacheFile -force
+    }
+  } else {
+    Write-Debug "[Get-BLLinkMetrics] - Loading Link Metrics from API."
 
-  $referring_domains     = ( & $BinDir\curl.exe -s -k -X GET $("https://api-ssl.bitly.com/v3/link/referring_domains?access_token=" + $connections.BitLy.AccessToken + "&link=" + $( EscapeDataStringRfc3986 $link )) | ConvertFrom-JSON ).data
+    if ( $IncludeAll ) {
+      $ApiResponse     = Get-RawBLLinkMetrics -link $link -IncludeAll
+    } else {
+      $ApiResponse     = Get-RawBLLinkMetrics -link $link
+    }
 
-  Start-Sleep -Seconds $connections.BitLy.ApiDelay
-
-  Write-Debug "[Get-BLLinkMetrics] Getting related ShortLinks"
-  Write-Debug "[Get-BLLinkMetrics]   API Call: https://api-ssl.bitly.com/v3/link/encoders?access_token=$( $connections.BitLy.AccessToken )&link=$( EscapeDataStringRfc3986 $link )"
-
-  $encoders              = ( & $BinDir\curl.exe -s -k -X GET $("https://api-ssl.bitly.com/v3/link/encoders?access_token=" + $connections.BitLy.AccessToken + "&link=" + $( EscapeDataStringRfc3986 $link )) | ConvertFrom-JSON ).data
-
-  Start-Sleep -Seconds $connections.BitLy.ApiDelay
-
-  Write-Debug "[Get-BLLinkMetrics] Getting Metrics for Shares"
-  Write-Debug "[Get-BLLinkMetrics]   API Call: https://api-ssl.bitly.com/v3/link/shares?access_token=$( $connections.BitLy.AccessToken )&link=$( EscapeDataStringRfc3986 $link )"
-
-  $shares                = ( & $BinDir\curl.exe -s -k -X GET $("https://api-ssl.bitly.com/v3/link/shares?access_token=" + $connections.BitLy.AccessToken + "&link=" + $( EscapeDataStringRfc3986 $link )) | ConvertFrom-JSON ).data
-
-
-  if ( $IncludeAll ) {
-    Write-Debug "[Get-BLLinkMetrics] Getting Metrics for Referrers"
-    Write-Debug "[Get-BLLinkMetrics]   API Call: https://api-ssl.bitly.com/v3/link/referrers?access_token=$( $connections.BitLy.AccessToken )&link=$( EscapeDataStringRfc3986 $link )"
-
-    $referrers           = ( & $BinDir\curl.exe -s -k -X GET $("https://api-ssl.bitly.com/v3/link/referrers?access_token=" + $connections.BitLy.AccessToken + "&link=" + $( EscapeDataStringRfc3986 $link )) | ConvertFrom-JSON ).data
-
-    Start-Sleep -Seconds $connections.BitLy.ApiDelay
-
-    Write-Debug "[Get-BLLinkMetrics] Getting Metrics for Referrers by Domain"
-    Write-Debug "[Get-BLLinkMetrics]   API Call: https://api-ssl.bitly.com/v3/link/referrers_by_domain?access_token=$( $connections.BitLy.AccessToken )&link=$( EscapeDataStringRfc3986 $link )"
-
-    $referrers_by_domain = ( & $BinDir\curl.exe -s -k -X GET $("https://api-ssl.bitly.com/v3/link/referrers_by_domain?access_token=" + $connections.BitLy.AccessToken + "&link=" + $( EscapeDataStringRfc3986 $link )) | ConvertFrom-JSON ).data
-
-    Start-Sleep -Seconds $connections.BitLy.ApiDelay
-
-    Write-Debug "[Get-BLLinkMetrics] Getting Metrics for related ShortLinks"
-    Write-Debug "[Get-BLLinkMetrics]   API Call: https://api-ssl.bitly.com/v3/link/encoders_count?access_token=$( $connections.BitLy.AccessToken )&link=$( EscapeDataStringRfc3986 $link )"
-
-    $encoders_count      = ( & $BinDir\curl.exe -s -k -X GET $("https://api-ssl.bitly.com/v3/link/encoders_count?access_token=" + $connections.BitLy.AccessToken + "&link=" + $( EscapeDataStringRfc3986 $link )) | ConvertFrom-JSON ).data
+    $ApiResponse | Export-CliXml $CacheFile -force
   }
 
-
-  New-Object PSObject -Property @{
-    Clicks            = $clicks
-    Countries         = $countries
-    Referrers         = $referrers
-    ReferrersByDomain = $referrers_by_domain
-    ReferringDomains  = $referring_domains
-    Encoders          = $encoders
-    EncodersCount     = $encoders_count
-    Shares            = $shares
-  }
+  $ApiResponse
 }
 
 

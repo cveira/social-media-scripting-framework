@@ -3,7 +3,7 @@
 Name:    Social Media Scripting Framework
 Module:  LinkedIn
 Version: 0.5.1 BETA
-Date:    2014/02/02
+Date:    2014/02/20
 Author:  Carlos Veira Lorenzo
          e-mail:   cveira [at] thinkinbig [dot] org
          blog:     thinkinbig.org
@@ -50,7 +50,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # https://developers.linkedin.com/documents/linkedin-api-resource-map
 
 
-$LINApiQuotaStatus = @{
+$script:LINApiQuotaStatus = @{
   CurrentDate                        = ( Get-Date ).Date
 
   ApiUserGetOwnProfileDailyLimit     = 0, $connections.LinkedIn.ApiUserGetOwnProfileDailyLimit
@@ -145,7 +145,7 @@ function New-LINConnection() {
 }
 
 
-function Update-RawLINApiQuotaStatus( [string] $ApiLimitName ) {
+function Update-RawLINApiQuotaStatus( [string] $ApiLimitName, [switch] $CloseAPI ) {
   <#
     .SYNOPSIS
       Updates the especified entry on API Quota Status Table.
@@ -165,10 +165,14 @@ function Update-RawLINApiQuotaStatus( [string] $ApiLimitName ) {
 
 
   if ( ( ( Get-Date ).Date - $LINApiQuotaStatus.CurrentDate ).Days -gt 0 ) {
-    . Initialize-RawLINApiQuotaStatus
+    Initialize-RawLINApiQuotaStatus
   }
 
-  $LINApiQuotaStatus.$ApiLimitName[0] += 1
+  if ( $CloseAPI ) {
+    $script:LINApiQuotaStatus.$ApiLimitName[0]  = $script:LINApiQuotaStatus.$ApiLimitName[1] + 1
+  } else {
+    $script:LINApiQuotaStatus.$ApiLimitName[0] += 1
+  }
 }
 
 
@@ -217,28 +221,28 @@ function Initialize-RawLINApiQuotaStatus() {
   #>
 
 
-  $LINApiQuotaStatus.CurrentDate                        = ( Get-Date ).Date
+  $script:LINApiQuotaStatus.CurrentDate                        = ( Get-Date ).Date
 
-  $LINApiQuotaStatus.ApiUserGetOwnProfileDailyLimit     = 0, $connections.LinkedIn.ApiUserGetOwnProfileDailyLimit
-  $LINApiQuotaStatus.ApiUserSetPostDailyLimit           = 0, $connections.LinkedIn.ApiUserSetPostDailyLimit
-  $LINApiQuotaStatus.ApiuserSetStatusUpdatesDailyLimit  = 0, $connections.LinkedIn.ApiuserSetStatusUpdatesDailyLimit
-  $LINApiQuotaStatus.ApiUserSetNetworkUpdatesDailyLimit = 0, $connections.LinkedIn.ApiUserSetNetworkUpdatesDailyLimit
-  $LINApiQuotaStatus.ApiUserSetMessagingDailyLimit      = 0, $connections.LinkedIn.ApiUserSetMessagingDailyLimit
-  $LINApiQuotaStatus.ApiUserSetInvitesDailyLimit        = 0, $connections.LinkedIn.ApiUserSetInvitesDailyLimit
+  $script:LINApiQuotaStatus.ApiUserGetOwnProfileDailyLimit     = 0, $connections.LinkedIn.ApiUserGetOwnProfileDailyLimit
+  $script:LINApiQuotaStatus.ApiUserSetPostDailyLimit           = 0, $connections.LinkedIn.ApiUserSetPostDailyLimit
+  $script:LINApiQuotaStatus.ApiuserSetStatusUpdatesDailyLimit  = 0, $connections.LinkedIn.ApiuserSetStatusUpdatesDailyLimit
+  $script:LINApiQuotaStatus.ApiUserSetNetworkUpdatesDailyLimit = 0, $connections.LinkedIn.ApiUserSetNetworkUpdatesDailyLimit
+  $script:LINApiQuotaStatus.ApiUserSetMessagingDailyLimit      = 0, $connections.LinkedIn.ApiUserSetMessagingDailyLimit
+  $script:LINApiQuotaStatus.ApiUserSetInvitesDailyLimit        = 0, $connections.LinkedIn.ApiUserSetInvitesDailyLimit
 
-  $LINApiQuotaStatus.ApiNetworkGetUpdatesDailyLimit     = 0, $connections.LinkedIn.ApiNetworkGetUpdatesDailyLimit
-  $LINApiQuotaStatus.ApiNetworkGetContactsDailyLimit    = 0, $connections.LinkedIn.ApiNetworkGetContactsDailyLimit
-  $LINApiQuotaStatus.ApiNetworkGetSearchesDailyLimit    = 0, $connections.LinkedIn.ApiNetworkGetSearchesDailyLimit
-  $LINApiQuotaStatus.ApiNetworkGetProfilesDailyLimit    = 0, $connections.LinkedIn.ApiNetworkGetProfilesDailyLimit
+  $script:LINApiQuotaStatus.ApiNetworkGetUpdatesDailyLimit     = 0, $connections.LinkedIn.ApiNetworkGetUpdatesDailyLimit
+  $script:LINApiQuotaStatus.ApiNetworkGetContactsDailyLimit    = 0, $connections.LinkedIn.ApiNetworkGetContactsDailyLimit
+  $script:LINApiQuotaStatus.ApiNetworkGetSearchesDailyLimit    = 0, $connections.LinkedIn.ApiNetworkGetSearchesDailyLimit
+  $script:LINApiQuotaStatus.ApiNetworkGetProfilesDailyLimit    = 0, $connections.LinkedIn.ApiNetworkGetProfilesDailyLimit
 
-  $LINApiQuotaStatus.ApiGroupGetDetailsDailyLimit       = 0, $connections.LinkedIn.ApiGroupGetDetailsDailyLimit
-  $LINApiQuotaStatus.ApiGroupGetPostDailyLimit          = 0, $connections.LinkedIn.ApiGroupGetPostDailyLimit
-  $LINApiQuotaStatus.ApiGroupGetCommentsDailyLimit      = 0, $connections.LinkedIn.ApiGroupGetCommentsDailyLimit
-  $LINApiQuotaStatus.ApiGroupSetPostDailyLimit          = 0, $connections.LinkedIn.ApiGroupSetPostDailyLimit
+  $script:LINApiQuotaStatus.ApiGroupGetDetailsDailyLimit       = 0, $connections.LinkedIn.ApiGroupGetDetailsDailyLimit
+  $script:LINApiQuotaStatus.ApiGroupGetPostDailyLimit          = 0, $connections.LinkedIn.ApiGroupGetPostDailyLimit
+  $script:LINApiQuotaStatus.ApiGroupGetCommentsDailyLimit      = 0, $connections.LinkedIn.ApiGroupGetCommentsDailyLimit
+  $script:LINApiQuotaStatus.ApiGroupSetPostDailyLimit          = 0, $connections.LinkedIn.ApiGroupSetPostDailyLimit
 
-  $LINApiQuotaStatus.ApiCompanyGetProfilesDailyLimit    = 0, $connections.LinkedIn.ApiCompanyGetProfilesDailyLimit
-  $LINApiQuotaStatus.ApiCompanyGetPostsDailyLimit       = 0, $connections.LinkedIn.ApiCompanyGetPostsDailyLimit
-  $LINApiQuotaStatus.ApiCompanyGetSearchesDailyLimit    = 0, $connections.LinkedIn.ApiCompanyGetSearchesDailyLimit
+  $script:LINApiQuotaStatus.ApiCompanyGetProfilesDailyLimit    = 0, $connections.LinkedIn.ApiCompanyGetProfilesDailyLimit
+  $script:LINApiQuotaStatus.ApiCompanyGetPostsDailyLimit       = 0, $connections.LinkedIn.ApiCompanyGetPostsDailyLimit
+  $script:LINApiQuotaStatus.ApiCompanyGetSearchesDailyLimit    = 0, $connections.LinkedIn.ApiCompanyGetSearchesDailyLimit
 }
 
 
@@ -418,6 +422,7 @@ function Get-RawLINUserProfileUrl( [string] $UserId ) {
 
   $LogFileName                  = "LinkedInModule"
   [PSObject[]] $PeopleEngaged   = @()
+  [string] $CacheFile           = "$CurrentCacheDir\linkedin\UserProfiles\LINUserProfileCache-$UserId.xml"
 
 
   if ( ( $UserId -eq $null ) -or ( $UserId.Length -eq 0 ) ) {
@@ -429,17 +434,48 @@ function Get-RawLINUserProfileUrl( [string] $UserId ) {
   }
 
 
+
   $ApiQuota                     = Get-RawLINApiQuotaStatus "ApiNetworkGetProfilesDailyLimit"
 
+  Write-Debug "[Get-RawLINUserProfileUrl] - Current API calls quota: $ApiQuota"
+
   if ( $ApiQuota.CurrentValue -lt $ApiQuota.MaxValue ) {
-    $ApiUrl                     = "https://api.linkedin.com/v1/people/$($UserId)?oauth2_access_token=$($connections.LinkedIn.AccessToken)"
-    $ApiResponse                = & $BinDir\curl.exe -s -k -X GET $ApiUrl
+    if ( Test-Path $CacheFile ) {
+      [int] $CacheAge           = -( Get-ChildItem $CacheFile ).LastWriteTime.Subtract( $( Get-Date ) ).TotalDays
 
-    Write-Debug "ApiUrl:      $ApiUrl"
-    # Write-Debug "ApiResponse: $ApiResponse"
-    # $ApiResponse | Out-File -Encoding UTF8 $CurrentLogsDir\$LogFileName-PeopleApiDump-$CurrentSessionId.log
+      Write-Debug "[Get-RawLINUserProfileUrl] - Current Cache Age: $CacheAge"
 
-    Update-RawLINApiQuotaStatus "ApiNetworkGetProfilesDailyLimit"
+      if ( $CacheAge -lt $connections.LinkedIn.UserProfileCacheExpirationDays ) {
+        $ApiResponse            = Get-Content $CacheFile -encoding UTF8
+
+        Write-Debug "[Get-RawLINUserProfileUrl] - User Profile loaded from Cache."
+      } else {
+        Write-Debug "[Get-RawLINUserProfileUrl] - Loading User Profile from API."
+
+        $ApiUrl                 = "https://api.linkedin.com/v1/people/$($UserId)?oauth2_access_token=$($connections.LinkedIn.AccessToken)"
+        $ApiResponse            = & $BinDir\curl.exe -s -k -X GET $ApiUrl
+
+        Write-Debug "[Get-RawLINUserProfileUrl] -   ApiUrl:      $ApiUrl"
+        # Write-Debug "[Get-RawLINUserProfileUrl] -   ApiResponse: $ApiResponse"
+
+        Update-RawLINApiQuotaStatus "ApiNetworkGetProfilesDailyLimit"
+
+        $ApiResponse | Out-File -FilePath $CacheFile -encoding UTF8 -force
+      }
+    } else {
+      Write-Debug "[Get-RawLINUserProfileUrl] - Loading User Profile from API."
+
+      $ApiUrl                   = "https://api.linkedin.com/v1/people/$($UserId)?oauth2_access_token=$($connections.LinkedIn.AccessToken)"
+      $ApiResponse              = & $BinDir\curl.exe -s -k -X GET $ApiUrl
+
+      Write-Debug "[Get-RawLINUserProfileUrl] -   ApiUrl:      $ApiUrl"
+      # Write-Debug "[Get-RawLINUserProfileUrl] -   ApiResponse: $ApiResponse"
+
+      Update-RawLINApiQuotaStatus "ApiNetworkGetProfilesDailyLimit"
+
+      $ApiResponse | Out-File -FilePath $CacheFile -encoding UTF8 -force
+    }
+
 
     if ( !( ( $ApiResponse -ilike "*Bad Request*" ) -or ( $ApiResponse -ilike "*error-code*" ) ) ) {
       $UserProfile              = ( [xml] $ApiResponse ).person
@@ -451,18 +487,23 @@ function Get-RawLINUserProfileUrl( [string] $UserId ) {
         UserProfileUrl          = $UserProfile."site-standard-profile-request".url -replace "http:","https:"
       }
     } else {
-      "$(get-date -format u) [Get-RawLINUserProfileUrl] - Unable to retrieve profile information form user"             >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+      Remove-Item -path $CacheFile -force
+
+      Update-RawLINApiQuotaStatus "ApiNetworkGetProfilesDailyLimit" -CloseAPI
+
+      "$(get-date -format u) [Get-RawLINUserProfileUrl] - API error. Unable to retrieve profile information form user"  >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
       "$(get-date -format u) [Get-RawLINUserProfileUrl] -   ApiUrl:      $ApiUrl"                                       >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
       "$(get-date -format u) [Get-RawLINUserProfileUrl] -   ApiResponse: `r`n $ApiResponse"                             >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
 
-      Write-Debug "[Get-RawLINUserProfileUrl] - Unable to retrieve profile information form user"
+      Write-Debug "[Get-RawLINUserProfileUrl] -   API error. Unable to retrieve profile information form user."
 
       return $null
     }
   } else {
-    "$(get-date -format u) [Get-RawLINUserProfileUrl] - The maximum number of daily API Calls has been reached: $($ApiQuota.MaxValue)" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+    "$(get-date -format u) [Get-RawLINUserProfileUrl] - API calls quota exceeded. Unable to retrieve profile information form user" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+    "$(get-date -format u) [Get-RawLINUserProfileUrl] -   ApiQuota: $($ApiQuota.MaxValue)"                                          >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
 
-    Write-Debug "[Get-RawLINUserProfileUrl] - Unable to retrieve profile information form user"
+    Write-Debug "[Get-RawLINUserProfileUrl] -   API calls quota exceeded. Unable to retrieve profile information form user"
 
     return $null
   }
@@ -492,6 +533,7 @@ function Get-RawLINCompanyLikes( [string] $UpdateId ) {
   $LogFileName                    = "LinkedInModule"
   [PSObject[]] $PeopleEngaged     = @()
   [string[]]   $UserIdBlackList   = @()
+  [string] $CacheFile             = "$CurrentCacheDir\linkedin\PostLikes\LINPostLikesCache-$UpdateId.xml"
 
 
   if ( ( $UpdateId -eq $null ) -or ( $UpdateId.Length -eq 0 ) ) {
@@ -504,16 +546,47 @@ function Get-RawLINCompanyLikes( [string] $UpdateId ) {
 
   $ApiQuota                       = Get-RawLINApiQuotaStatus "ApiCompanyGetPostsDailyLimit"
 
+  Write-Debug "[Get-RawLINCompanyLikes] - Current API calls quota: $ApiQuota"
+
   if ( $ApiQuota.CurrentValue -lt $ApiQuota.MaxValue ) {
-    $ApiUrl                       = "https://api.linkedin.com/v1/companies/$($connections.LinkedIn.DefaultCompanyId)/updates/$($UpdateId):(num-likes,update-key,likes)?&oauth2_access_token=$($connections.LinkedIn.AccessToken)"
-    $ApiResponse                  = & $BinDir\curl.exe -s -k -X GET $ApiUrl
+    if ( Test-Path $CacheFile ) {
+      [int] $CacheAge             = -( Get-ChildItem $CacheFile ).LastWriteTime.Subtract( $( Get-Date ) ).TotalDays
 
-    Write-Debug "[Get-RawLINCompanyLikes] - Getting Company Likes"
-    Write-Debug "[Get-RawLINCompanyLikes] -   ApiUrl:      $ApiUrl"
-    # Write-Debug "[Get-RawLINCompanyLikes] -   ApiResponse: `n`n$ApiResponse"
-    # $ApiResponse | Out-File -Encoding UTF8 $CurrentLogsDir\$LogFileName-CompanyLikesApiDump-$CurrentSessionId.log
+      Write-Debug "[Get-RawLINCompanyLikes] - Current Cache Age: $CacheAge"
 
-    Update-RawLINApiQuotaStatus "ApiCompanyGetPostsDailyLimit"
+      if ( $CacheAge -lt $connections.LinkedIn.CompanyLikesCacheExpirationDays ) {
+        $ApiResponse              = Get-Content $CacheFile -encoding UTF8
+
+        Write-Debug "[Get-RawLINCompanyLikes] - Post Likes loaded from Cache."
+      } else {
+        Write-Debug "[Get-RawLINCompanyLikes] - Loading Post Likes from API."
+
+        $ApiUrl                   = "https://api.linkedin.com/v1/companies/$($connections.LinkedIn.DefaultCompanyId)/updates/$($UpdateId):(num-likes,update-key,likes)?&oauth2_access_token=$($connections.LinkedIn.AccessToken)"
+        $ApiResponse              = & $BinDir\curl.exe -s -k -X GET $ApiUrl
+
+        Write-Debug "[Get-RawLINCompanyLikes] - Getting Company Likes"
+        Write-Debug "[Get-RawLINCompanyLikes] -   ApiUrl:      $ApiUrl"
+        # Write-Debug "[Get-RawLINCompanyLikes] -   ApiResponse: `n`n$ApiResponse"
+
+        Update-RawLINApiQuotaStatus "ApiCompanyGetPostsDailyLimit"
+
+        $ApiResponse | Out-File -FilePath $CacheFile -encoding UTF8 -force
+      }
+    } else {
+      Write-Debug "[Get-RawLINCompanyLikes] - Loading Post Likes from API."
+
+      $ApiUrl                     = "https://api.linkedin.com/v1/companies/$($connections.LinkedIn.DefaultCompanyId)/updates/$($UpdateId):(num-likes,update-key,likes)?&oauth2_access_token=$($connections.LinkedIn.AccessToken)"
+      $ApiResponse                = & $BinDir\curl.exe -s -k -X GET $ApiUrl
+
+      Write-Debug "[Get-RawLINCompanyLikes] - Getting Company Likes"
+      Write-Debug "[Get-RawLINCompanyLikes] -   ApiUrl:      $ApiUrl"
+      # Write-Debug "[Get-RawLINCompanyLikes] -   ApiResponse: `n`n$ApiResponse"
+
+      Update-RawLINApiQuotaStatus "ApiCompanyGetPostsDailyLimit"
+
+      $ApiResponse | Out-File -FilePath $CacheFile -encoding UTF8 -force
+    }
+
 
     if ( !( ( $ApiResponse -ilike "*Bad Request*" ) -or ( $ApiResponse -ilike "*error-code*" ) ) ) {
       $LikesCount                 = [int] ( [xml] $ApiResponse ).update."num-likes"
@@ -555,7 +628,7 @@ function Get-RawLINCompanyLikes( [string] $UpdateId ) {
         "$(get-date -format u) [Get-RawLINCompanyLikes] -   ApiUrl:      $ApiUrl"                                              >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
         "$(get-date -format u) [Get-RawLINCompanyLikes] -   ApiResponse: `r`n$ApiResponse"                                     >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
 
-        Write-Debug "[Get-RawLINCompanyLikes] - Data mismatch: LikeCounts don't match the number of users retrieved"
+        Write-Debug "[Get-RawLINCompanyLikes] -   Data mismatch: LikeCounts don't match the number of users retrieved"
       }
 
       New-Object PSObject -Property @{
@@ -563,18 +636,23 @@ function Get-RawLINCompanyLikes( [string] $UpdateId ) {
         PeopleEngaged           = $PeopleEngaged
       }
     } else {
-      "$(get-date -format u) [Get-RawLINCompanyLikes] - Unable to retrieve Likes from post"                                    >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+      Remove-Item -path $CacheFile -force
+
+      Update-RawLINApiQuotaStatus "ApiCompanyGetPostsDailyLimit" -CloseAPI
+
+      "$(get-date -format u) [Get-RawLINCompanyLikes] - API error. Unable to retrieve Likes from post"                         >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
       "$(get-date -format u) [Get-RawLINCompanyLikes] -   ApiUrl:      $ApiUrl"                                                >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
       "$(get-date -format u) [Get-RawLINCompanyLikes] -   ApiResponse: `r`n$ApiResponse"                                       >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
 
-      Write-Debug "[Get-RawLINCompanyLikes] - Unable to retrieve Likes from post"
+      Write-Debug "[Get-RawLINCompanyLikes] -   API error. Unable to retrieve Likes from post"
 
       return $null
     }
   } else {
-    "$(get-date -format u) [Get-RawLINCompanyLikes] - The maximum number of daily API Calls has been reached: $($ApiQuota.MaxValue)" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+    "$(get-date -format u) [Get-RawLINCompanyLikes] - API calls quota exceeded. Unable to retrieve Likes from post"            >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+    "$(get-date -format u) [Get-RawLINCompanyLikes] -   ApiQuota: $($ApiQuota.MaxValue)"                                       >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
 
-    Write-Debug "[Get-RawLINCompanyLikes] - Unable to retrieve Likes from post"
+    Write-Debug "[Get-RawLINCompanyLikes] -   API calls quota exceeded. Unable to retrieve Likes from post"
 
     return $null
   }
@@ -601,8 +679,10 @@ function Get-RawLINCompanyComments( [string] $UpdateId ) {
 
   #>
 
+
   $LogFileName                    = "LinkedInModule"
   [PSObject[]] $PeopleEngaged     = @()
+  [string] $CacheFile             = "$CurrentCacheDir\linkedin\PostComments\LINPostCommentsCache-$UpdateId.xml"
 
 
   if ( ( $UpdateId -eq $null ) -or ( $UpdateId.Length -eq 0 ) ) {
@@ -615,16 +695,43 @@ function Get-RawLINCompanyComments( [string] $UpdateId ) {
 
   $ApiQuota                       = Get-RawLINApiQuotaStatus "ApiCompanyGetPostsDailyLimit"
 
+  Write-Debug "[Get-RawLINCompanyComments] - Current API calls quota: $ApiQuota"
+
   if ( $ApiQuota.CurrentValue -lt $ApiQuota.MaxValue ) {
-    $ApiUrl                       = "https://api.linkedin.com/v1/companies/$($connections.LinkedIn.DefaultCompanyId)/updates/$($UpdateId):(updateComments)?&oauth2_access_token=$($connections.LinkedIn.AccessToken)"
-    $ApiResponse                  = & $BinDir\curl.exe -s -k -X GET $ApiUrl
+    if ( Test-Path $CacheFile ) {
+      [int] $CacheAge             = -( Get-ChildItem $CacheFile ).LastWriteTime.Subtract( $( Get-Date ) ).TotalDays
 
-    Write-Debug "[Get-RawLINCompanyComments] - Getting Company Comments"
-    Write-Debug "[Get-RawLINCompanyComments] -   ApiUrl:      $ApiUrl"
-    # Write-Debug "[Get-RawLINCompanyComments] -   ApiResponse: `n`n$ApiResponse"
-    # $ApiResponse | Out-File -Encoding UTF8 $CurrentLogsDir\$LogFileName-CompanyCommentsApiDump-$CurrentSessionId.log
+      Write-Debug "[Get-RawLINCompanyComments] - Current Cache Age: $CacheAge"
 
-    Update-RawLINApiQuotaStatus "ApiCompanyGetPostsDailyLimit"
+      if ( $CacheAge -lt $connections.LinkedIn.CompanyCommentsCacheExpirationDays ) {
+        $ApiResponse              = Get-Content $CacheFile -encoding UTF8
+
+        Write-Debug "[Get-RawLINCompanyComments] - Post Comments loaded from Cache."
+      } else {
+        $ApiUrl                   = "https://api.linkedin.com/v1/companies/$($connections.LinkedIn.DefaultCompanyId)/updates/$($UpdateId):(updateComments)?&oauth2_access_token=$($connections.LinkedIn.AccessToken)"
+        $ApiResponse              = & $BinDir\curl.exe -s -k -X GET $ApiUrl
+
+        Write-Debug "[Get-RawLINCompanyComments] - Getting Company Comments"
+        Write-Debug "[Get-RawLINCompanyComments] -   ApiUrl:      $ApiUrl"
+        # Write-Debug "[Get-RawLINCompanyComments] -   ApiResponse: `n`n$ApiResponse"
+
+        Update-RawLINApiQuotaStatus "ApiCompanyGetPostsDailyLimit"
+
+        $ApiResponse | Out-File -FilePath $CacheFile -encoding UTF8 -force
+      }
+    } else {
+      $ApiUrl                     = "https://api.linkedin.com/v1/companies/$($connections.LinkedIn.DefaultCompanyId)/updates/$($UpdateId):(updateComments)?&oauth2_access_token=$($connections.LinkedIn.AccessToken)"
+      $ApiResponse                = & $BinDir\curl.exe -s -k -X GET $ApiUrl
+
+      Write-Debug "[Get-RawLINCompanyComments] - Getting Company Comments"
+      Write-Debug "[Get-RawLINCompanyComments] -   ApiUrl:      $ApiUrl"
+      # Write-Debug "[Get-RawLINCompanyComments] -   ApiResponse: `n`n$ApiResponse"
+
+      Update-RawLINApiQuotaStatus "ApiCompanyGetPostsDailyLimit"
+
+      $ApiResponse | Out-File -FilePath $CacheFile -encoding UTF8 -force
+    }
+
 
     if ( !( ( $ApiResponse -ilike "*Bad Request*" ) -or ( $ApiResponse -ilike "*error-code*" ) ) ) {
       $CommentsCount              = [int] ( [xml] $ApiResponse ).update."update-comments".total
@@ -647,7 +754,7 @@ function Get-RawLINCompanyComments( [string] $UpdateId ) {
         "$(get-date -format u) [Get-RawLINCompanyComments] -   ApiUrl:      $ApiUrl"                                                 >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
         "$(get-date -format u) [Get-RawLINCompanyComments] -   ApiResponse: `r`n$ApiResponse"                                        >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
 
-        Write-Debug "[Get-RawLINCompanyComments] - Data mismatch: CommentCounts don't match the number of users retrieved"
+        Write-Debug "[Get-RawLINCompanyComments] -   Data mismatch: CommentCounts don't match the number of users retrieved"
       }
 
       New-Object PSObject -Property @{
@@ -655,18 +762,23 @@ function Get-RawLINCompanyComments( [string] $UpdateId ) {
         PeopleEngaged             = $PeopleEngaged
       }
     } else {
-      "$(get-date -format u) [Get-RawLINCompanyComments] - Unable to retrieve Comments from post"                                    >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+      Remove-Item -path $CacheFile -force
+
+      Update-RawLINApiQuotaStatus "ApiCompanyGetPostsDailyLimit" -CloseAPI
+
+      "$(get-date -format u) [Get-RawLINCompanyComments] - API error. Unable to retrieve Comments from post"                         >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
       "$(get-date -format u) [Get-RawLINCompanyComments] -   ApiUrl:      $ApiUrl"                                                   >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
       "$(get-date -format u) [Get-RawLINCompanyComments] -   ApiResponse: `r`n$ApiResponse"                                          >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
 
-      Write-Debug "[Get-RawLINCompanyComments] - Unable to retrieve Comments from post"
+      Write-Debug "[Get-RawLINCompanyComments] -   API error. Unable to retrieve Comments from post"
 
       return $null
     }
   } else {
-    "$(get-date -format u) [Get-RawLINCompanyComments] - The maximum number of daily API Calls has been reached: $($ApiQuota.MaxValue)" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+    "$(get-date -format u) [Get-RawLINCompanyComments] - API calls quota exceeded. Unable to retrieve Comments from post"            >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+    "$(get-date -format u) [Get-RawLINCompanyComments] -   ApiQuota: $($ApiQuota.MaxValue)"                                          >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
 
-    Write-Debug "[Get-RawLINCompanyComments] - Unable to retrieve Comments from post"
+    Write-Debug "[Get-RawLINCompanyComments] -   API calls quota exceeded. Unable to retrieve Comments from post"
 
     return $null
   }
@@ -745,6 +857,8 @@ function Get-RawLINCompanyPosts( [string] $from = "", [string] $domain = "", [in
   if ( $ConnectionAllowed ) {
     $ApiQuota                     = Get-RawLINApiQuotaStatus "ApiCompanyGetPostsDailyLimit"
 
+    Write-Debug "[Get-RawLINCompanyPosts] - Current API calls quota: $ApiQuota"
+
     if ( $ApiQuota.CurrentValue -lt $ApiQuota.MaxValue ) {
       # $ApiUrl                     = "https://api.linkedin.com/v1/companies/$FromCompanyId/updates?start=0&count=$results&oauth2_access_token=$($connections.LinkedIn.AccessToken)"
       $ApiUrl                     = "https://api.linkedin.com/v1/companies/$FromCompanyId/updates?event-type=status-update&start=0&count=$results&oauth2_access_token=$($connections.LinkedIn.AccessToken)"
@@ -783,24 +897,27 @@ function Get-RawLINCompanyPosts( [string] $from = "", [string] $domain = "", [in
             LikesCount            = $CurrentLikesCount
             CommentsCount         = $CurrentCommentsCount
             PeopleEngaged         = $PeopleEngaged
-            SubChannelName        = $FromCompanyName + "(Company)"
+            SubChannelName        = $FromCompanyName + " (Company)"
           }
 
           [PSObject[]] $PeopleEngaged = @()
         }
       } else {
-        "$(get-date -format u) [Get-RawLINCompanyPosts] - Unable to retrieve Company Posts" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
-        "$(get-date -format u) [Get-RawLINCompanyPosts] -   ApiUrl: $ApiUrl"                >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
-        "$(get-date -format u) [Get-RawLINCompanyPosts] -   ApiResponse: `n`n$ApiResponse"  >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+        Update-RawLINApiQuotaStatus "ApiCompanyGetPostsDailyLimit" -CloseAPI
 
-        Write-Debug "[Get-RawLINCompanyPosts] - Unable to retrieve Company Posts"
+        "$(get-date -format u) [Get-RawLINCompanyPosts] - API error. Unable to retrieve Company Posts" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+        "$(get-date -format u) [Get-RawLINCompanyPosts] -   ApiUrl: $ApiUrl"                           >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+        "$(get-date -format u) [Get-RawLINCompanyPosts] -   ApiResponse: `n`n$ApiResponse"             >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+        Write-Debug "[Get-RawLINCompanyPosts] -   API error. Unable to retrieve Company Posts"
 
         return $null
       }
     } else {
-      "$(get-date -format u) [Get-RawLINCompanyPosts] - The maximum number of daily API Calls has been reached: $($ApiQuota.MaxValue)" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+      "$(get-date -format u) [Get-RawLINCompanyPosts] - API calls quota exceeded. Unable to retrieve Company Posts" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+      "$(get-date -format u) [Get-RawLINCompanyPosts] -   ApiQuota: $($ApiQuota.MaxValue)"                          >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
 
-      Write-Debug "[Get-RawLINCompanyPosts] - Unable to retrieve Company Posts"
+      Write-Debug "[Get-RawLINCompanyPosts] -   API calls quota exceeded. Unable to retrieve Company Posts"
 
       return $null
     }
@@ -835,45 +952,74 @@ function Get-LINGroupPostPermaLink( [string] $id, [string] $title ) {
       N/A
   #>
 
-  $LogFileName  = "LinkedInModule"
 
-  try {
-    $UriPostId  = $id.Substring(2) -replace "-","."
+  function Get-RawLINGroupPostPermaLink() {
+    try {
+      $UriPostId  = $id.Substring(2) -replace "-","."
 
-    $UriTitle1  = ( ( ( ( ( (  $title -replace '[^a-zA-Z0-9 ]','').Split(' ') -ne "" ) -ne "a" ) -ne "the" )[0..4] | ForEach-Object { "$_-" } | Out-String ) -replace "[\r\n]","" ).Trim()
-    $UriTitle2  = ( ( ( ( ( (  $title -replace '[^a-zA-Z0-9 ]','').Split(' ') -ne "" ) -ne "a" ) -ne "the" )[0..3] | ForEach-Object { "$_-" } | Out-String ) -replace "[\r\n]","" ).Trim()
+      $UriTitle1  = ( ( ( ( ( (  $title -replace '[^a-zA-Z0-9 ]','').Split(' ') -ne "" ) -ne "a" ) -ne "the" )[0..4] | ForEach-Object { "$_-" } | Out-String ) -replace "[\r\n]","" ).Trim()
+      $UriTitle2  = ( ( ( ( ( (  $title -replace '[^a-zA-Z0-9 ]','').Split(' ') -ne "" ) -ne "a" ) -ne "the" )[0..3] | ForEach-Object { "$_-" } | Out-String ) -replace "[\r\n]","" ).Trim()
 
-    $URL1       = "https://www.linkedin.com/groups/$UriTitle1$UriPostId"
-    $URL2       = "https://www.linkedin.com/groups/$UriTitle2$UriPostId"
+      $URL1       = "https://www.linkedin.com/groups/$UriTitle1$UriPostId"
+      $URL2       = "https://www.linkedin.com/groups/$UriTitle2$UriPostId"
 
-    Write-Debug "URL1: $URL1"
-    Write-Debug "URL2: $URL2"
+      Write-Debug "[Get-LINGroupPostPermaLink] -   URL1: $URL1"
+      Write-Debug "[Get-LINGroupPostPermaLink] -   URL2: $URL2"
 
-    $HttpCode   = & $BinDir\curl.exe -s -k -X GET -o /dev/null -w "%{http_code}" --user-agent "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)" "$URL1"
-
-    if ( $HttpCode -eq "200" ) {
-      return $URL1
-    } else {
-      Write-Debug "HttpCode: $HttpCode"
-
-      $HttpCode = & $BinDir\curl.exe -s -k -X GET -o /dev/null -w "%{http_code}" --user-agent "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)" "$URL2"
+      $HttpCode   = & $BinDir\curl.exe -s -k -X GET -o /dev/null -w "%{http_code}" --user-agent "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)" "$URL1"
 
       if ( $HttpCode -eq "200" ) {
-        return $URL2
+        return $URL1
       } else {
-        Write-Debug "HttpCode: $HttpCode"
+        Write-Debug "[Get-LINGroupPostPermaLink] -   HttpCode: $HttpCode"
 
-        return $VALUE_NA
+        $HttpCode = & $BinDir\curl.exe -s -k -X GET -o /dev/null -w "%{http_code}" --user-agent "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)" "$URL2"
+
+        if ( $HttpCode -eq "200" ) {
+          return $URL2
+        } else {
+          Write-Debug "[Get-LINGroupPostPermaLink] -   HttpCode: $HttpCode"
+
+          return $VALUE_NA
+        }
       }
+    } catch {
+      "$(get-date -format u) [Get-LINGroupPostPermaLink] - Unable to compose a PermaLink for this Group Post:" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+      "$(get-date -format u) [Get-LINGroupPostPermaLink] -   id:    $id"                                       >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+      "$(get-date -format u) [Get-LINGroupPostPermaLink] -   title: $title"                                    >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+      Write-Debug "[Get-LINGroupPostPermaLink] -   Unable to compose a PermaLink for this Group Post"
+
+      return $VALUE_NA
     }
-  } catch {
-    "$(get-date -format u) [Get-LINGroupPostPermaLink] - Unable to compose a PermaLink for this Group Post:" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
-    "$(get-date -format u) [Get-LINGroupPostPermaLink] -   id:    $id"                                       >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
-    "$(get-date -format u) [Get-LINGroupPostPermaLink] -   title: $title"                                    >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+  }
 
-    Write-Debug "[Get-LINGroupPostPermaLink] - Unable to compose a PermaLink for this Group Post"
 
-    return $VALUE_NA
+  $LogFileName        = "LinkedInModule"
+  [string] $CacheFile = "$CurrentCacheDir\linkedin\PostPermaLinks\LINPostPermaLinkCache-$( Get-RawNormalizedPropertyName $id ).txt"
+
+  if ( Test-Path $CacheFile ) {
+    [int] $CacheAge   = -( Get-ChildItem $CacheFile ).LastWriteTime.Subtract( $( Get-Date ) ).TotalDays
+
+    Write-Debug "[Get-LINGroupPostPermaLink] - Current Cache Age: $CacheAge"
+
+    if ( $CacheAge -lt $connections.LinkedIn.PermaLinkCacheExpirationDays ) {
+      $PermaLink      = Get-Content $CacheFile -encoding UTF8
+
+      Write-Debug "[Get-LINGroupPostPermaLink] - PermaLink loaded from Cache."
+    } else {
+      Write-Debug "[Get-LINGroupPostPermaLink] - Resolving PermaLink."
+
+      $PermaLink      = Get-RawLINGroupPostPermaLink
+
+      $PermaLink | Out-File -FilePath $CacheFile -encoding UTF8 -force
+    }
+  } else {
+    Write-Debug "[Get-LINGroupPostPermaLink] - Resolving PermaLink."
+
+    $PermaLink       = Get-RawLINGroupPostPermaLink
+
+    $PermaLink | Out-File -FilePath $CacheFile -encoding UTF8 -force
   }
 }
 
@@ -921,6 +1067,8 @@ function Get-RawLINGroupPosts( [string] $from = "", [int] $results = 0 ) {
 
   if ( $FromGroupId -ne $null ) {
     $ApiQuota                            = Get-RawLINApiQuotaStatus "ApiGroupGetPostDailyLimit"
+
+    Write-Debug "[Get-RawLINGroupPosts] - Current API calls quota: $ApiQuota"
 
     if ( $ApiQuota.CurrentValue -lt $ApiQuota.MaxValue ) {
       $ApiUrl                            = "https://api.linkedin.com/v1/groups/$FromGroupId/posts:(id,creation-timestamp,title,summary,creator:(first-name,last-name,picture-url,headline),likes,comments,attachment:(image-url,content-domain,content-url,title,summary),relation-to-viewer)?category=discussion&order=recency&count=$results&oauth2_access_token=$($connections.LinkedIn.AccessToken)"
@@ -1048,18 +1196,21 @@ function Get-RawLINGroupPosts( [string] $from = "", [int] $results = 0 ) {
           [PSObject[]] $PeopleEngaged      = @()
         }
       } else {
-        "$(get-date -format u) [Get-RawLINGroupPosts] - Unable to retrieve Group Posts"  >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
-        "$(get-date -format u) [Get-RawLINGroupPosts] -   ApiUrl: $ApiUrl"               >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
-        "$(get-date -format u) [Get-RawLINGroupPosts] -   ApiResponse: `n`n$ApiResponse" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+        Update-RawLINApiQuotaStatus "ApiGroupGetPostDailyLimit" -CloseAPI
 
-        Write-Debug "[Get-RawLINGroupPosts] - Unable to retrieve Group Posts"
+        "$(get-date -format u) [Get-RawLINGroupPosts] - API error. Unable to retrieve Group Posts"  >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+        "$(get-date -format u) [Get-RawLINGroupPosts] -   ApiUrl: $ApiUrl"                          >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+        "$(get-date -format u) [Get-RawLINGroupPosts] -   ApiResponse: `n`n$ApiResponse"            >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+        Write-Debug "[Get-RawLINGroupPosts] -   API error. Unable to retrieve Group Posts"
 
         return $null
       }
     } else {
-      "$(get-date -format u) [Get-RawLINGroupPosts] - The maximum number of daily API Calls has been reached: $($ApiQuota.MaxValue)" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+      "$(get-date -format u) [Get-RawLINGroupPosts] - API calls quota exceeded. Unable to retrieve Group Posts" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+      "$(get-date -format u) [Get-RawLINGroupPosts] -   ApiQuota: $($ApiQuota.MaxValue)"                        >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
 
-      Write-Debug "[Get-RawLINGroupPosts] - Unable to retrieve Group Posts"
+      Write-Debug "[Get-RawLINGroupPosts] -   API calls quota exceeded. Unable to retrieve Group Posts"
 
       return $null
     }
@@ -1152,11 +1303,17 @@ function Get-RawLINTimeLineCache( [string] $type = "group", [string] $name = "" 
   [string] $CacheFile      = "$CurrentCacheDir\LINTimeLineCache-$type-$SubChannelName.xml"
 
   if ( Test-Path $CacheFile ) {
-    [int] $CacheAge        = -( Get-ChildItem $CacheFile ).LastWriteTime.Subtract( $( Get-Date ) ).TotalHours
+    [int] $CacheAge        = -( Get-ChildItem $CacheFile ).LastWriteTime.Subtract( $( Get-Date ) ).TotalMinutes
+
+    if ( $type -eq "group" ) {
+      $ExpirationTime      = [int] $connections.LinkedIn.PostsCacheExpiration * 60
+    } else {
+      $ExpirationTime      = $connections.LinkedIn.CompanyPostsCacheExpirationMinutes
+    }
 
     Write-Debug "[Get-RawLINTimeLineCache] - Current Cache Age: $CacheAge"
 
-    if ( $CacheAge -lt $connections.LinkedIn.PostsCacheExpiration ) {
+    if ( $CacheAge -lt $ExpirationTime ) {
       $CachedTimeLine      = Import-CliXml $CacheFile
 
       Write-Debug "[Get-RawLINTimeLineCache] - Cache content loaded"
@@ -1171,7 +1328,7 @@ function Get-RawLINTimeLineCache( [string] $type = "group", [string] $name = "" 
 }
 
 
-function Set-RawLINTimeLineCache( [PSObject[]] $using, [string] $type = "group", [string] $name = "" ) {
+function Set-RawLINTimeLineCache {
   <#
     .SYNOPSIS
       Updates contents of LinkedIn Subchannel Time Line local cache.
@@ -1180,11 +1337,11 @@ function Set-RawLINTimeLineCache( [PSObject[]] $using, [string] $type = "group",
       Updates contents of LinkedIn Subchannel Time Line local cache. Each Subchannel gets its own cache file.
 
     .EXAMPLE
-      $RawLINTimeLine | Where-Object { $_.NormalizedPost.SubChannelName -eq "My Target Group Name"   } | Set-RawLINTimeLineCache -type group   -name "My Target Group Name"
-      $RawLINTimeLine | Where-Object { $_.NormalizedPost.SubChannelName -eq "My Target Company Name" } | Set-RawLINTimeLineCache -type company -name "My Target Company Name"
+      $RawLINTimeLine | Where-Object { $_.SubChannelName -eq "My Target Group Name"   } | Set-RawLINTimeLineCache -type group   -name "My Target Group Name"
+      $RawLINTimeLine | Where-Object { $_.SubChannelName -eq "My Target Company Name" } | Set-RawLINTimeLineCache -type company -name "My Target Company Name"
 
-      Set-RawLINTimeLineCache -type group   -name "My Target Group Name"   -using $( $RawLINTimeLine | Where-Object { $_.NormalizedPost.SubChannelName -eq "My Target Group Name"   } )
-      Set-RawLINTimeLineCache -type company -name "My Target Company Name" -using $( $RawLINTimeLine | Where-Object { $_.NormalizedPost.SubChannelName -eq "My Target Company Name" } )
+      Set-RawLINTimeLineCache -type group   -name "My Target Group Name"   -using $( $RawLINTimeLine | Where-Object { $_.SubChannelName -eq "My Target Group Name"   } )
+      Set-RawLINTimeLineCache -type company -name "My Target Company Name" -using $( $RawLINTimeLine | Where-Object { $_.SubChannelName -eq "My Target Company Name" } )
 
     .NOTES
       Low-level function.
@@ -1194,26 +1351,56 @@ function Set-RawLINTimeLineCache( [PSObject[]] $using, [string] $type = "group",
   #>
 
 
+  param(
+    [Parameter(
+       Mandatory           = $true,
+       Position            = 0,
+       ValueFromPipeline   = $true,
+       HelpMessage         = 'Object collection to place in the cache.'
+    )] [PSObject[]] $using = @(),
+
+    [Parameter(
+       Mandatory           = $true,
+       Position            = 1,
+       ValueFromPipeline   = $false,
+       HelpMessage         = "Object type ('Company' Page post or 'Group' Post)."
+    )] [string] $type      = "group",
+
+    [Parameter(
+       Mandatory           = $true,
+       Position            = 2,
+       ValueFromPipeline   = $false,
+       HelpMessage         = 'Name for the cache file.'
+    )] [string] $name      = ""
+  )
+
+
   begin {
+    $LogFileName                                    = "LinkedInModule"
+
     $CacheFile                                      = "$CurrentCacheDir\LINTimeLineCache-$type-$( Get-RawNormalizedPropertyName $name ).xml"
     [System.Collections.ArrayList] $TimeLineToCache = @()
   }
 
+
   process {
-    if ( $_ -ne $null ) {
-      $TimeLineToCache.Add( $( $_ | ConvertTo-JSON ) ) | Out-Null
-    } else {
-      if ( $using -ne $null ) {
-        if ( $using.NormalizedPost -ne $null ) {
-          $using | ForEach-Object {
-            $TimeLineToCache.Add( $( $_ | ConvertTo-JSON ) ) | Out-Null
-          }
-        } else {
-          return $false
+    if ( $using -ne $null ) {
+      $using | ForEach-Object {
+        try {
+          $TimeLineToCache.Add( $( $_ | ConvertTo-JSON -Compress ) ) | Out-Null
+        } catch {
+          "$(get-date -format u) [Set-RawLINTimeLineCache] - Unexpected error when adding post to the Time Line" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+          "$(get-date -format u) [Set-RawLINTimeLineCache] -   Post: `r`n $( $_ | Format-Custom )"               >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+          Write-Debug "[Set-RawLINTimeLineCache] - Unexpected error when adding post to the Time Line"
         }
-      } else {
-        return $false
       }
+    } else {
+      "$(get-date -format u) [Set-RawLINTimeLineCache] - The input object is null." >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+      Write-Debug "[Set-RawLINTimeLineCache] - The input object is null."
+
+      return $false
     }
   }
 
@@ -1249,6 +1436,8 @@ function Get-LINTimeLine( [string] $company = "", [string] $domain = "", [string
 
 
   # $DebugPreference = "Continue"
+
+  $LogFileName                             = "LinkedInModule"
 
   [PSObject[]] $RawTimeLine                = @()
   [PSObject[]] $CachedTimeLine             = @()
@@ -1319,7 +1508,7 @@ function Get-LINTimeLine( [string] $company = "", [string] $domain = "", [string
 
         $RawTimeLine       += $CachedTimeLine
       } else {
-        "$(get-date -format u) [Get-LINTimeLine] - Unable to properly cache Group Posts."                      >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+        "$(get-date -format u) [Get-LINTimeLine] - Unable to properly cache Group Posts."                     >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
         "$(get-date -format u) [Get-LINTimeLine] -   Group Name: $( $connections.LinkedIn.DefaultGroupName )" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
 
         Write-Debug "[Get-LINTimeLine] - Unable to properly cache Group Posts."
@@ -1375,7 +1564,7 @@ function Get-LINTimeLine( [string] $company = "", [string] $domain = "", [string
 
           $RawTimeLine     += $CachedTimeLine
         } else {
-          "$(get-date -format u) [Get-LINTimeLine] - Unable to properly cache Company Posts."                         >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+          "$(get-date -format u) [Get-LINTimeLine] - Unable to properly cache Company Posts."                       >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
           "$(get-date -format u) [Get-LINTimeLine] -   Company Name: $( $connections.LinkedIn.DefaultCompanyName )" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
 
           Write-Debug "[Get-LINTimeLine] - Unable to properly cache Company Posts."
@@ -1431,7 +1620,7 @@ function Get-LINTimeLine( [string] $company = "", [string] $domain = "", [string
 
           $RawTimeLine     += $CachedTimeLine
         } else {
-          "$(get-date -format u) [Get-LINTimeLine] - Unable to properly cache Group Posts."                      >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+          "$(get-date -format u) [Get-LINTimeLine] - Unable to properly cache Group Posts."                     >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
           "$(get-date -format u) [Get-LINTimeLine] -   Group Name: $( $connections.LinkedIn.DefaultGroupName )" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
 
           Write-Debug "[Get-LINTimeLine] - Unable to properly cache Group Posts."
@@ -1466,7 +1655,14 @@ function Get-LINTimeLine( [string] $company = "", [string] $domain = "", [string
 
       $NormalizedPost  = $post | ConvertTo-LINNormalizedPost
 
-      $TimeLine.Add( $( $NormalizedPost | ConvertTo-JSON -Compress ) ) | Out-Null
+      try {
+        $TimeLine.Add( $( $NormalizedPost | ConvertTo-JSON -Compress ) ) | Out-Null
+      } catch {
+        "$(get-date -format u) [Get-LINTimeLine] - Unexpected error when adding post to the Time Line"          >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+        "$(get-date -format u) [Get-LINTimeLine] -   NormalizedPost: `r`n $( $NormalizedPost | Format-Custom )" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+        Write-Debug "[Get-LINTimeLine] - Unexpected error when adding post to the Time Line"
+      }
 
       $ExecutionTime.Stop()
 
@@ -1484,7 +1680,14 @@ function Get-LINTimeLine( [string] $company = "", [string] $domain = "", [string
 
       $NormalizedPost  = $post | ConvertTo-LINNormalizedPost -IncludeAll
 
-      $TimeLine.Add( $( $NormalizedPost | ConvertTo-JSON -Compress ) ) | Out-Null
+      try {
+        $TimeLine.Add( $( $NormalizedPost | ConvertTo-JSON -Compress ) ) | Out-Null
+      } catch {
+        "$(get-date -format u) [Get-LINTimeLine] - Unexpected error when adding post to the Time Line"          >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+        "$(get-date -format u) [Get-LINTimeLine] -   NormalizedPost: `r`n $( $NormalizedPost | Format-Custom )" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+        Write-Debug "[Get-LINTimeLine] - Unexpected error when adding post to the Time Line"
+      }
 
       $ExecutionTime.Stop()
 
@@ -1596,6 +1799,9 @@ function ConvertTo-LINNormalizedPost( [switch] $IncludeAll, [string] $schema = $
 
     if ( $IncludeLinkMetrics ) {
       if ( $NewPost.NormalizedPost.SharedLinks -gt 0 ) {
+        $NewPost.NormalizedPost.ClickThroughsCount      = 0
+        $NewPost.NormalizedPost.InteractionsCount       = 0
+
         $NewPost.NormalizedPost.SharedLinks | ForEach-Object {
           if ( $_ -like "*bit*" ) {
             $LinkGlobalMetrics                          = Get-BLLinkGlobalMetrics $_
@@ -1665,6 +1871,7 @@ function Update-LINPosts( [PSObject[]] $from ) {
   #>
 
 
+  $LogFileName                                 = "LinkedInModule"
   [System.Collections.ArrayList] $UpdatedPosts = @()
 
   $i               = 1
@@ -1678,9 +1885,18 @@ function Update-LINPosts( [PSObject[]] $from ) {
     Write-Debug "[Update-LINPosts] - TotalElements:       $($from.Count)"
     Write-Debug "[Update-LINPosts] - ElapsedMinutes:      $($ExecutionTime.Elapsed.TotalMinutes)"
 
-    $ExecutionTime = [Diagnostics.Stopwatch]::StartNew()
+    $ExecutionTime  = [Diagnostics.Stopwatch]::StartNew()
 
-    $UpdatedPosts.Add( $( $post | Update-LINPost -IncludeAll | ConvertTo-JSON ) ) | Out-Null
+    $NormalizedPost = $post | Update-LINPost -IncludeAll
+
+    try {
+      $UpdatedPosts.Add( $( $NormalizedPost | ConvertTo-JSON -compress ) ) | Out-Null
+    } catch {
+      "$(get-date -format u) [Update-LINPosts] - Unexpected error when adding post to the Time Line"          >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+      "$(get-date -format u) [Update-LINPosts] -   NormalizedPost: `r`n $( $NormalizedPost | Format-Custom )" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+      Write-Debug "[Update-LINPosts] - Unexpected error when adding post to the Time Line"
+    }
 
     $ExecutionTime.Stop()
 
@@ -1832,6 +2048,8 @@ function Update-LINEngagedProfiles( [PSObject[]] $from ) {
   #>
 
 
+  $LogFileName                                    = "LinkedInModule"
+
   [System.Collections.ArrayList] $UpdatedProfiles = @()
 
   $i               = 1
@@ -1845,9 +2063,18 @@ function Update-LINEngagedProfiles( [PSObject[]] $from ) {
     Write-Debug "[INFO] TotalElements:       $($from.Count)"
     Write-Debug "[INFO] ElapsedMinutes:      $($ExecutionTime.Elapsed.TotalMinutes)"
 
-    $ExecutionTime = [Diagnostics.Stopwatch]::StartNew()
+    $ExecutionTime  = [Diagnostics.Stopwatch]::StartNew()
 
-    $UpdatedProfiles.Add( $( $profile | Update-LINUserProfileData | ConvertTo-JSON ) ) | Out-Null
+    $NormalizedUser = $profile | Update-LINUserProfileData
+
+    try {
+      $UpdatedProfiles.Add( $( $NormalizedUser | ConvertTo-JSON -compress ) ) | Out-Null
+    } catch {
+      "$(get-date -format u) [Update-LINEngagedProfiles] - Unexpected error when adding user to the list"               >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+      "$(get-date -format u) [Update-LINEngagedProfiles] -   NormalizedUser: `r`n $( $NormalizedUser | Format-Custom )" >> $CurrentLogsDir\$LogFileName-$CurrentSessionId.log
+
+      Write-Debug "[Update-LINEngagedProfiles] - Unexpected error when adding user to the list"
+    }
 
     $ExecutionTime.Stop()
 
